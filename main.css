@@ -1,10 +1,49 @@
-
 body {
+  background: rgb(140, 140, 60);
+  margin-right: 20%;
+  margin-left: 20%;
   padding: 0;
-  margin: 0;
-  display: flex;
   justify-content: center;
 }
+
+h1 {
+  background-color: blue;
+  border: 5px solid black;
+  margin: 0;
+}
+
+ul {
+  margin: 0;
+  padding: 0;
+}
+
+.content {
+  margin: 0;
+}
+
+.rooms-list {
+  background: rgb(200, 50, 50);
+}
+
+div.rooms-list li {
+  background: red;
+  border-color: red;
+  border: solid;
+  border-width: 5px;
+  display: inline-block;
+}
+
+.chat {
+  background: rgb(120, 200, 100);
+
+}
+
+.chat li {
+  background: rgb(120, 250, 100);
+  border: 5px solid rgb(20, 140, 20);
+  display: block;
+}
+/*
 #message-container {
   width: 80%;
   max-width: 1200px;
@@ -28,3 +67,4 @@ body {
 #message-input {
   flex-grow: 1;
 }
+*/
