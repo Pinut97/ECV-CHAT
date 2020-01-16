@@ -5,7 +5,17 @@ var inputMessage = document.getElementById("message-input");
 var addButton = document.getElementById("add");
 
 server.connect("wss://tamats.com:55000", "TestChat");
+server.on_connect = greetings;
 server.on_ready = isConnected;
+
+function greetings()
+{
+    var greet = document.createTextNode("Welcome to the chat dear user!");
+    var newElement = document.createElement("LI");
+    newElement.appendChild(greet);
+    document.getElementById("messageList").appendChild(newElement);
+    console.log("When connected!");
+}
 
 function isConnected ()
 {
@@ -17,19 +27,10 @@ addButton.addEventListener('click', addMessage);
 function addMessage(){
 	if(inputMessage.value != " "){
 		var newElement = document.createElement("LI");
-		var text = document.createTextNode(inputMessage.value);
+        var text = document.createTextNode(inputMessage.value);
 		newElement.appendChild(text);
-
+        server.sendMessage(inputMessage.value);
+        inputMessage.value = " ";
 		document.getElementById("messageList").appendChild(newElement);
 	}
-}
-/*
-document.getElementById("add").onclick = function()
-{
-    var text = document.getElementsByName("msg").value;
-    //var text = document.getElementById("message-input").value;
-    var list = "<li>" + text + "</li>";
-    console.log(list);
-    document.getElementById("message-container").appendChild(list);
-}
-*/
+};
