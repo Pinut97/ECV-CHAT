@@ -1,15 +1,21 @@
 body {
-  background: rgb(140, 140, 60);
+  background: azure; /* rgb(140, 140, 60);*/
   margin-right: 20%;
   margin-left: 20%;
   padding: 0;
   justify-content: center;
 }
 
-h1 {
-  background-color: blue;
-  border: 5px solid black;
-  margin: 0;
+*{
+  font-family: Verdana, Geneva, Tahoma, sans-serif;
+}
+
+h1, div {
+  background-color: lightblue; 
+  padding: 10px;
+  border: 5px;
+  border-radius: 5px;
+  margin: 15px;
 }
 
 ul {
@@ -22,27 +28,34 @@ ul {
 }
 
 .rooms-list {
-  background: rgb(200, 50, 50);
+  background: lightsalmon;
+  margin: 5px;
 }
 
 div.rooms-list li {
   background: red;
   border-color: red;
-  border: solid;
+  padding: 5px;
   border-width: 5px;
   display: inline-block;
 }
 
 .chat {
-  background: rgb(120, 200, 100);
-
+  /*background: rgb(120, 200, 100);*/
 }
 
 .chat li {
-  background: rgb(120, 250, 100);
+  background: rgb(120, 200, 100);
   border: 5px solid rgb(20, 140, 20);
+  padding: 5px;
+  margin: 5px;
   display: block;
 }
+
+#message-input {
+  flex-grow: 1;
+}
+
 /*
 #message-container {
   width: 80%;
@@ -63,8 +76,5 @@ div.rooms-list li {
   max-width: 1200px;
   width: 80%;
   display: flex;
-}
-#message-input {
-  flex-grow: 1;
 }
 */
