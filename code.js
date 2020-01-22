@@ -43,11 +43,12 @@ server.on_message = function(id, msg)
 
 function sendMsg()
 {
-    if(!server || !server.is_connected)
+    var text = document.getElementById("message-input").value;
+    if(!server || !server.is_connected || !text)
     {
         return;
     }
-    var text = document.getElementById("message-input").value;
+    
     var li = document.createElement("li");
     li.textContent = "You: " + text;
     server.sendMessage(server.user_name + ": " + text);

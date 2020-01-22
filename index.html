@@ -25,10 +25,19 @@
     </div>
 
     <div>
-        <form>
-            <input type="text" name="msg" placeholder="Write" required id="message-input">
+            <input type="text" name="msg" placeholder="Write" id="message-input">
             <input type="button" value="Send" id="add" onclick="sendMsg()">
-        </form>
+
+        <script>
+            var input = document.getElementById("message-input");
+            input.addEventListener("keyup", function(event) {
+                if (event.keyCode === 13) {
+                    event.preventDefault();
+                    document.getElementById("add").click();
+                }
+            });
+        </script>
+
     </div>
     <script type="text/javascript" src="sillyclient.js"></script>
     <script type="text/javascript" src="code.js"></script>
