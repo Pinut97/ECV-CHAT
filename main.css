@@ -1,5 +1,5 @@
-body {
-  background: azure; /* rgb(140, 140, 60);*/
+body, form {
+  background: azure;
   margin-right: 20%;
   margin-left: 20%;
   padding: 0;
@@ -24,7 +24,7 @@ ul {
 }
 
 .content {
-  margin: 0;
+  margin-top: 5%;
 }
 
 .rooms-list {
@@ -41,7 +41,8 @@ div.rooms-list li {
 }
 
 .chat {
-  /*background: rgb(120, 200, 100);*/
+  overflow: auto;
+  height: 500px;
 }
 
 .chat li {
