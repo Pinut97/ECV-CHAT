@@ -2,7 +2,7 @@
 var server = new SillyClient();
 
 function login()
-{   
+{
     var room = document.getElementById("Room").value;
     var name = document.getElementById("UserName").value;
     server.close();
@@ -29,8 +29,8 @@ function greetings(name)
 
 server.on_user_connected = function( user_id, data )
 {
-    console.log("user connected");
-    console.log("User with id: " + server.user_name + " has connected.");
+    console.log(user_id + " " + data);
+    server.sendMessage(server.user_id, user_id);
 };
 
 server.on_message = function(id, msg)
