@@ -9,8 +9,8 @@
 
 <h1>Welcome to SillyChat.com</h1>
 
-<input type="text" name="UserName" placeholder="Name" required>
-<input type="text" name="Room" placeholder="Room" required>
+<input type="text" id="UserName" placeholder="Name" required>
+<input type="text" id="Room" placeholder="Room" required>
 <input type="button" value="Connect" id="login" onclick="login()">
 
 <div class="content">
@@ -27,7 +27,7 @@
 <div>
     <form>
         <input type="text" name="msg" placeholder="Write" required id="message-input">
-        <input type="button" value="Send" id="add">
+        <input type="button" value="Send" id="add" onclick="sendMsg()">
     </form>
 </div>
 <script type="text/javascript" src="sillyclient.js"></script>

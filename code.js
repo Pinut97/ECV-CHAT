@@ -1,30 +1,30 @@
 
 var server = new SillyClient();
 
-var inputMessage = document.getElementById("message-input");
-var addButton = document.getElementById("add");
-var userList = [];
-
 server.close();
 
-server.on_connect = greetings;
-server.on_ready = ready;
+function login ()
+{   
+    var room = document.getElementById("Room").value;
+    var name = document.getElementById("UserName").value;
+    server.connect("wss://ecv-etic.upf.edu/node/9000/ws", room);
+    server.on_ready = greetings(name);
+}
 
 function greetings(name)
 {
     server.user_name = name;
+    console.log(server.user_name);
     var greet = document.createTextNode("Welcome to the chat user " + name +"!");
     var newElement = document.createElement("LI");
     newElement.appendChild(greet);
     document.getElementById("messageList").appendChild(newElement);
-    console.log("When connected!");
+    server.on_ready = server.sendMessage("User " + server.user_name + " has connected to the room.");
 }
 
-function isConnected (name)
+server.on_user_connected = function( user_id )
 {
-    server.user_name = name;
-    console.log("You have connected to the server!");
-    console.log(userList);
+    console.log("User with id: " + user_id + " has connected.");
 }
 
 server.on_message = function(id, msg)
@@ -35,22 +35,7 @@ server.on_message = function(id, msg)
     document.getElementById("messageList").appendChild(li);
 }
 
-function login ()
-{
-    var room = document.getElementsByName("Room").value;
-    server.connect("wss://ecv-etic.upf.edu/node/9000/ws", room);
-}
-
-function ready()
-{
-    console.log("It is ready");
-    server.user_name = document.getElementsByName("UserName").value;
-    var li = "<li> User " + server.user_name + " connected to the room. </li>";
-    //document.getElementById("messageList").appendChild(li);
-    server.sendMessage(li);
-}
-
-document.getElementById("add").onclick = function()
+function sendMsg()
 {
     if(!server || !server.is_connected)
     {
@@ -58,7 +43,7 @@ document.getElementById("add").onclick = function()
     }
     var text = document.getElementById("message-input").value;
     var li = document.createElement("li");
-    li.textContent = text;
+    li.textContent = "You: " + text;
     server.sendMessage(server.user_name + ": " + text);
     document.getElementById("messageList").appendChild(li);
     document.getElementById("message-input").value = "";
