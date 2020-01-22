@@ -27,11 +27,11 @@ function greetings(name)
     document.getElementById("messageList").appendChild(newElement);
 };
 
-server.on_user_connected = function( user_id, data)
+server.on_user_connected = function( user_id, data )
 {
     console.log("user connected");
     console.log("User with id: " + server.user_name + " has connected.");
-}
+};
 
 server.on_message = function(id, msg)
 {
@@ -39,7 +39,7 @@ server.on_message = function(id, msg)
     var li = document.createElement("LI")
     li.appendChild(message);
     document.getElementById("messageList").appendChild(li);
-}
+};
 
 function sendMsg()
 {
@@ -53,4 +53,4 @@ function sendMsg()
     server.sendMessage(server.user_name + ": " + text);
     document.getElementById("messageList").appendChild(li);
     document.getElementById("message-input").value = "";
-}
+};

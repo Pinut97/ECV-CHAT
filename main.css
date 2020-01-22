@@ -42,7 +42,7 @@ div.rooms-list li {
 
 .chat {
   overflow: auto;
-  height: 500px;
+  height: 600px;
 }
 
 .chat li {

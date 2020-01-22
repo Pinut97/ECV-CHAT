@@ -7,31 +7,31 @@
 </head>
 <body>
 
-<h1>Welcome to SillyChat.com</h1>
+    <h1>Welcome to SillyChat.com</h1>
 
-    <input type="text" id="UserName" placeholder="Name" required>
-    <input type="text" id="Room" placeholder="Room" required>
-    <input type="button" value="Connect" id="login" onclick="login()">
+        <input type="text" id="UserName" placeholder="Name" required>
+        <input type="text" id="Room" placeholder="Room" required>
+        <input type="button" value="Connect" id="login" onclick="login()">
 
-<div class="content">
-    <div class="rooms-list">
-        ROOM: 
+    <div class="content">
+        <div class="rooms-list">
+            ROOM: 
+        </div>
+
+        <div class="chat">
+            <ul id="messageList">
+            </ul>
+        </div>
     </div>
 
-    <div class="chat">
-        <ul id="messageList">
-        </ul>
+    <div>
+        <form>
+            <input type="text" name="msg" placeholder="Write" required id="message-input">
+            <input type="button" value="Send" id="add" onclick="sendMsg()">
+        </form>
     </div>
-</div>
-
-<div>
-    <form>
-        <input type="text" name="msg" placeholder="Write" required id="message-input">
-        <input type="button" value="Send" id="add" onclick="sendMsg()">
-    </form>
-</div>
-<script type="text/javascript" src="sillyclient.js"></script>
-<script type="text/javascript" src="code.js"></script>
+    <script type="text/javascript" src="sillyclient.js"></script>
+    <script type="text/javascript" src="code.js"></script>
 </body>
 
 </html>
