@@ -1,30 +1,36 @@
 
 var server = new SillyClient();
 
+var messageStore = [];
+
 function login()
 {
     var room = document.getElementById("Room").value;
-    var name = document.getElementById("UserName").value;
+    server.room["name"] = room;
     server.close();
     server.connect("wss://ecv-etic.upf.edu/node/9000/ws", room);
-    server.on_connect = greetings(name, room);
+    server.on_connect = greetings;
     server.on_ready = userReady;
 };
 
 function userReady()
 {
-    console.log("userReady")
     server.num_clients++;
-    name = document.getElementById("UserName").value;
     server.user_name = name;
-    server.sendMessage("User " + server.user_name + " has connected!");
+    var text = "User " + server.user_name + " has connected!";
+    var message = {
+        username: server.user_name,
+        type: "msg-login",
+        data: text,
+        login: true
+    };
+    server.sendMessage(JSON.stringify(message));
 };
 
-function greetings(name, room)
+function greetings()
 {
-    console.log("greetings");
+    name = document.getElementById("UserName").value;
     server.user_name = name;
-    server.room["name"] = room;
     var greet = document.createTextNode("Welcome to the chat user " + server.user_name +"!");
     var newElement = document.createElement("LI");
     newElement.appendChild(greet);
@@ -33,9 +39,6 @@ function greetings(name, room)
 
 server.on_user_connected = function( user_id, data )
 {
-    console.log("on_user_connected");
-    console.log(user_id + " " + data);
-
     var message = {
         username: server.user_name,
         type: "id",
@@ -47,32 +50,31 @@ server.on_user_connected = function( user_id, data )
 
 server.on_message = function(id, msg)
 {  
-    console.log("on message " + "Sender: " + id + " Receiver: " + server.user_id);
     var parsed = JSON.parse(msg);
-    if (parsed.type === "id"){
-        console.log("tipo id");
+    if (parsed.type === "id")
+    {
         server.room["clients"].push(parsed.data); //afegeix el nou id a la llista de clients.
-        console.log(parsed.data);
         server.room["updated"] = true; //L'usuari està updated ja que si rep aquest missatge significa que ell té tots els anteriors missatges.
         server.room["clients"].sort(function(a, b){return a-b}); //Ordena la lista de forma ascendent.
-        console.log("Lowest id: " + server.room["clients"][0])
         getPreviousMessages(server.room["clients"][0]);
     } 
-    else if (parsed.type === "msg") {
-            console.log("tipo msg");
-            console.log(parsed.data);
-            var message = document.createTextNode( "[" + parsed.username + "]: " + parsed.data );
-            var li = document.createElement("LI")
-            li.appendChild(message);
-            document.getElementById("messageList").appendChild(li);
+    else if (parsed.type === "msg") 
+    {
+        if(parsed.login === true){
+            return;
+        }
+        messageStore.push(parsed);
+        var message = document.createTextNode( "[" + parsed.username + "]: " + parsed.data );
+        var li = document.createElement("LI")
+        li.appendChild(message);
+        document.getElementById("messageList").appendChild(li);
     }
-    else if (parsed.type === "update_petition") {
+    else if (parsed.type === "update_petition") 
+    {
         sendPreviousMessages(id);
     }
-    else if (parsed.type === "update") {
-        console.log("UPDATE!");
-        console.log("Sender: " + id + " Receiver: " + server.user_id);
-        console.log(parsed.data);
+    else if (parsed.type === "update") 
+    {
         var message = document.createTextNode( "[" + parsed.username + "]: " + parsed.data );
         var li = document.createElement("LI")
         li.appendChild(message);
@@ -98,33 +100,26 @@ function sendMsg()
         data: text
     };
 
+    messageStore.push(message);
+
     server.sendMessage(JSON.stringify(message));
     document.getElementById("messageList").appendChild(li);
     document.getElementById("message-input").value = "";
 };
 
-function sendPreviousMessages(id) {
-    console.log("send previous messages");
-    console.log("Sender: " + id + " Receiver: " + server.user_id)
+function sendPreviousMessages(id) 
+{
     var list = document.getElementById("messageList");
     var length = document.getElementById("messageList").getElementsByTagName("li").length;
-    var output = []
+    var output = [];
 
-    console.log(list);
-    console.log(length);
-
-    var message = {
-        username: server.user_name,
-        type: "update",
-        data: list.textContent
-    };
-    server.sendMessage(JSON.stringify(message), id);
+    for(var i = 0; i < messageStore.length; i++ )
+    {
+        server.sendMessage(JSON.stringify(messageStore[i]), id);
+    }
 }
 
 function getPreviousMessages(id) {
-
-    console.log("getPreviousMessages")
-    console.log("Sender: " + server.user_id + " Receiver: " + id)
 
     var message = {
         username: server.user_name,
