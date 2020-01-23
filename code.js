@@ -73,6 +73,10 @@ server.on_message = function(id, msg)
         console.log("UPDATE!");
         console.log("Sender: " + id + " Receiver: " + server.user_id);
         console.log(parsed.data);
+        var message = document.createTextNode( "[" + parsed.username + "]: " + parsed.data );
+        var li = document.createElement("LI")
+        li.appendChild(message);
+        document.getElementById("messageList").appendChild(li);
     }
 
 };
@@ -102,14 +106,17 @@ function sendMsg()
 function sendPreviousMessages(id) {
     console.log("send previous messages");
     console.log("Sender: " + id + " Receiver: " + server.user_id)
-    var list = document.getElementById["messageList"];
+    var list = document.getElementById("messageList");
     var length = document.getElementById("messageList").getElementsByTagName("li").length;
-    var messages = [];
+    var output = []
+
+    console.log(list);
+    console.log(length);
 
     var message = {
         username: server.user_name,
         type: "update",
-        data: list
+        data: list.textContent
     };
     server.sendMessage(JSON.stringify(message), id);
 }
@@ -118,6 +125,7 @@ function getPreviousMessages(id) {
 
     console.log("getPreviousMessages")
     console.log("Sender: " + server.user_id + " Receiver: " + id)
+
     var message = {
         username: server.user_name,
         type: "update_petition",
