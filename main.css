@@ -1,5 +1,6 @@
 body, form {
-  background: azure;
+  background: rgb(63,94,251);
+  background: linear-gradient(to bottom right, rgb(137, 155, 241) 0%, rgb(245, 132, 155) 100%);
   margin-right: 20%;
   margin-left: 20%;
   padding: 0;
@@ -11,11 +12,15 @@ body, form {
 }
 
 h1, div {
-  background-color: lightblue; 
+  background: rgba(148,187,233,1);
   padding: 10px;
   border: 5px;
   border-radius: 5px;
   margin: 15px;
+}
+
+.login{
+  background-color: azure;
 }
 
 ul {
@@ -28,7 +33,7 @@ ul {
 }
 
 .rooms-list {
-  background: lightsalmon;
+  background: linear-gradient(to right,lightsalmon, lightpink);
   margin: 5px;
 }
 
@@ -40,20 +45,72 @@ div.rooms-list li {
   display: inline-block;
 }
 
+div.input{
+  padding: 10px;
+}
+
+#add {
+  color: #fff !important;
+  text-transform: uppercase;
+  text-decoration: none;
+  background: #60a3bc;
+  padding: 20px;
+  border-radius: 50px;
+  display: inline-block;
+  border: none;
+  transition: all 0.4s ease 0s;
+  }
+
+#message-input{
+  border-radius: 5px;
+  width: 85%;
+  height: 25px;
+  flex-grow: 1;
+  margin-right: 30px;
+}
+
 .chat {
   overflow: auto;
-  height: 600px;
+  height: 550px;
 }
 
 .chat li {
-  background: rgb(120, 200, 100);
-  border: 5px solid rgb(20, 140, 20);
+  background: linear-gradient(to right, rgb(120, 200, 100), lightgreen);
+  border-radius: 8px;
+  
+  padding: 8px;
+  margin: 5px;
+  display: block;
+}
+
+.own{
+  background: red;
+  border: 5px solid magenta;
   padding: 5px;
   margin: 5px;
   display: block;
 }
 
-#message-input {
-  flex-grow: 1;
+.myButton {
+	box-shadow: 0px 10px 14px -7px #276873;
+	background:linear-gradient(to bottom, #599bb3 5%, #408c99 100%);
+	background-color:#599bb3;
+	border-radius:8px;
+	display:inline-block;
+	cursor:pointer;
+	color:#ffffff;
+	font-family:Arial;
+	font-size:15px;
+	font-weight:bold;
+	padding:10px 26px;
+	text-decoration:none;
+	text-shadow:0px 1px 0px #3d768a;
 }
-
+.myButton:hover {
+	background:linear-gradient(to bottom, #408c99 5%, #599bb3 100%);
+	background-color:#408c99;
+}
+.myButton:active {
+	position:relative;
+	top:1px;
+}

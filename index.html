@@ -8,11 +8,14 @@
 <body>
 
     <h1>Welcome to SillyChat.com</h1>
-
+    <div class="login">
+        <b>Name</b>
         <input type="text" id="UserName" placeholder="Name" required>
+        <b>Room</b>
         <input type="text" id="Room" placeholder="Room" required>
         <input type="button" value="Connect" id="login" onclick="login()">
-
+    </div>
+    
     <div class="content">
         <div class="rooms-list">
             ROOM: 
@@ -21,13 +24,14 @@
         <div class="chat">
             <ul id="messageList">
             </ul>
+
         </div>
     </div>
 
-    <div>
+    <div class="input">
             <input type="text" name="msg" placeholder="Write" id="message-input">
-            <input type="button" value="Send" id="add" onclick="sendMsg()">
-
+            <a href="#" class="myButton" id="add" onclick="sendMsg()">SEND</a>
+    </div>
         <script>
             var input = document.getElementById("message-input");
             input.addEventListener("keyup", function(event) {
@@ -38,7 +42,7 @@
             });
         </script>
 
-    </div>
+
     <script type="text/javascript" src="sillyclient.js"></script>
     <script type="text/javascript" src="code.js"></script>
 </body>

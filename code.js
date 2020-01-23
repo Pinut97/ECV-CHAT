@@ -9,9 +9,14 @@ function login()
     server.room["name"] = room;
     server.close();
     server.connect("wss://ecv-etic.upf.edu/node/9000/ws", room);
-    server.on_connect = greetings;
     server.on_ready = userReady;
+    server.on_connect = greetings;
 };
+
+function attachRoom()
+{
+    document.getElementsByClassName("rooms-list").innerHTML = "ROOM: " + server.room.name;
+}
 
 function userReady()
 {
@@ -51,7 +56,7 @@ server.on_message = function(id, msg)
     {
         if(parsed.login === true)
         {
-            var message = document.createTextNode( "[" + parsed.username + "]: " + parsed.data );
+            var message = document.createTextNode(parsed.data );
             var li = document.createElement("LI")
             li.appendChild(message);
             document.getElementById("messageList").appendChild(li);
@@ -60,6 +65,7 @@ server.on_message = function(id, msg)
             if(server.user_id == server.room.clients[0])
             {
                 sendPreviousMessages(parsed.id);
+
             }
         }
         else
@@ -83,7 +89,8 @@ function sendMsg()
     }
     
     var li = document.createElement("li");
-    li.textContent = "You: " + text;    
+    li.textContent = "You: " + text;
+    li.setAttribute("id", "own");
     var message = {
         username: server.user_name,
         type: "msg",
