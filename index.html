@@ -9,15 +9,16 @@
 
     <h1>Welcome to SillyChat.com</h1>
     <div class="login">
-        <b>Name</b>
+        <b style="margin-left: 20px;">Name</b>
         <input type="text" id="UserName" placeholder="Name" required>
-        <b>Room</b>
+        <b style="margin-left: 20px;">Room</b>
         <input type="text" id="Room" placeholder="Room" required>
-        <input type="button" value="Connect" id="login" onclick="login()">
+        <a href="#" class="myButton" id="login" onclick="login()" style="margin-left: 20px;">CONNECT</a>
+        <!--input type="button" value="Connect" id="login" onclick="login()"-->
     </div>
     
     <div class="content">
-        <div class="rooms-list">
+        <div class="rooms-list" id="room-name">
             ROOM: 
         </div>
 

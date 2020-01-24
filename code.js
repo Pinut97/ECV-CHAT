@@ -11,11 +11,12 @@ function login()
     server.connect("wss://ecv-etic.upf.edu/node/9000/ws", room);
     server.on_ready = userReady;
     server.on_connect = greetings;
+    attachRoom();
 };
 
 function attachRoom()
 {
-    document.getElementsByClassName("rooms-list").innerHTML = "ROOM: " + server.room.name;
+    document.getElementById("room-name").innerHTML = "ROOM: " + server.room.name;
 }
 
 function userReady()
@@ -46,6 +47,16 @@ function greetings()
 server.on_user_connected = function( user_id, data )
 {
 
+};
+
+server.on_user_disconnected = function( user_id )
+{
+    var message = {
+        id: user_id,
+        type: msg,
+        data: "User disconnected."
+    }
+    server.sendMessage(JSON.stringify(message));
 };
 
 server.on_message = function(id, msg)
