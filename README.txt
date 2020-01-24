@@ -1,9 +1,9 @@
-+-------------------------------+
-| Pau Florentí Solano 193968	|
-| Àlvar Alonso Rovira 192880	|
-| ECV Assignment 1: SillyChat	|
-| Date: 24/01/2020		|
-+-------------------------------+
++---------------------------------------------------------------+
+| Pau Florentí Solano 193968 pau.florenti01@estudian.upf.edu	|
+| Àlvar Alonso Rovira 192880 alvar.alonso01@estudiant.upf.edu	|
+| ECV Assignment 1: SillyChat					|
+| Date: 24/01/2020						|
++---------------------------------------------------------------+
 
 Chat sencillo usando SillyClient. El usuario, en las pestañas de arriba,
 puede seleccionar su nombre y room a la que quiere conectarse. Debajo tiene
