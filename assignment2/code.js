@@ -1,4 +1,17 @@
 
+var connection = new WebSocket('ws://127.0.0.1:9022');
+
+connection.onopen = function()
+{
+    console.log("user is in!");
+
+    //main app loop
+    init();
+
+    connection.send("hello boys!");
+    loop();
+}
+
 var canvas = document.getElementById("myCanvas");
 var rect;
 
@@ -22,7 +35,6 @@ function draw()
 
 function animation(ctx, image, w, h, x, y, frame, flip)
 {
-    console.log(frame);
     if(flip)
     {
         ctx.drawImage( image, frame * w, 2*h, w, h, x, y, 128, 256 );
@@ -107,10 +119,8 @@ function onMouse ( e )
     if(e.type == 'click')
     {
         o.goalPosX = canvasx;
-        console.log(o.goalPosX);
     }
 };
 
 document.body.addEventListener('click', onMouse);
-init();
-loop();
+
