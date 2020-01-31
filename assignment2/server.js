@@ -22,6 +22,7 @@ wsServer = new webSocketServer({
 wsServer.on('request', function(request)
 {
 	var connection = request.accept(null, request.origin);
+	console.log("new user");
 
 	connection.on('message', function(message)
 	{
