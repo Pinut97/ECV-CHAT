@@ -22,20 +22,22 @@ wsServer.on('request', function(request){
     var connection = request.accept(null, request.origin);
     console.log("new websocket user!");
 
-    //var index = clients.push(connection) - 1;
+    var index = clients.push(connection) - 1;
     console.log(index);
 
     console.log("connection accepted");
 
     connection.on('message', function(message){
-        if(message.type = 'utf8'){
-            //do something
-            var messageParsed = JSON.parse(message);
-        }
+        if(message.type === 'utf8'){
+            //parse the message
+            var msg = JSON.parse(message.utf8Data);
 
-        if(messageParsed.type === "position")
-        {
-            console.log("position message received!");
+            //act depending on type
+            if(msg.type === 'init')
+            {
+                console.log("This is an init message");
+                
+            }
         }
     });
 

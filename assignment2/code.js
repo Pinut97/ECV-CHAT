@@ -8,7 +8,13 @@ connection.onopen = function()
     //main app loop
     init();
 
-    connection.send("hello boys!");
+    var msg = {
+        position: objects[0].posX,
+        type: 'init',
+        index: objects[0].index
+    };
+
+    connection.send(JSON.stringify(msg));
     loop();
 }
 
@@ -79,14 +85,17 @@ function init()
     canvas.width = rect.width;
     canvas.height = rect.height;
 
+    var index = Math.floor((Math.random() * 4) + 1);
+
     var img = new Image();
-    img.src = "spritesheets/man1-spritesheet.png";
+    img.src = "spritesheets/man" + index + "-spritesheet.png";
 
     user = {
         posX: canvas.width * 0.5,
         posY: canvas.height * 0.5,
         goalPosX: canvas.width * 0.5,
         goalPosY: canvas.height * 0.5,
+        index: index,
         flip: false,
         frame: idle,
         vel: 50,
