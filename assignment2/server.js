@@ -23,7 +23,7 @@ wsServer.on('request', function(request){
     console.log("new websocket user!");
 
     var index = clients.push(connection) - 1;
-    console.log(index);
+    console.log("index: " + index + " length: " + clients.length);
 
     console.log("connection accepted");
 
@@ -36,6 +36,10 @@ wsServer.on('request', function(request){
             if(msg.type === 'init')
             {
                 console.log("This is an init message");
+                for(var i = 0; i <= index; i++)
+                {
+                    clients[i].send(message.utf8Data);
+                }
                 
             }
         }

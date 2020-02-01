@@ -18,6 +18,35 @@ connection.onopen = function()
     loop();
 }
 
+connection.onmessage = function( message )
+{
+    console.log( message.data );
+    console.log( "user received message: " + message.data );
+    var msgParsed = JSON.parse( message.data );
+    console.log( msgParsed );
+
+    if( msgParsed.type === 'init')
+    {
+        var img = new Image();
+        img.src = "spritesheets/man" + msgParsed.index + "-spritesheet.png";
+
+        var user = {
+            posX: msgParsed.position,
+            posY: canvas.height * 0.5,
+            goalPosX: msgParsed.position,
+            goalPosY: canvas.height * 0.5,
+            index: msgParsed.index,
+            flip: false,
+            frame: idle,
+            vel: 50,
+            img: img
+        }
+        objects.push(user);
+    }
+
+    console.log(objects);
+};
+
 var canvas = document.getElementById("myCanvas");
 var rect;
 
@@ -36,7 +65,12 @@ function draw()
     var o = objects[0];
     var t = Math.floor(performance.now() * 0.001 * 10);
 
-    animation(ctx, o.img, 32, 64, o.posX, o.posY, o.frame[t % o.frame.length], o.flip);
+    for(var i = 0; i < objects.length; i++)
+    {
+        console.log(objects[i].img);
+        animation(ctx, objects[i].img, 32, 64, objects[i].posX, objects[i].posY, objects[i].frame[t % objects[i].frame.length], objects[i].flip);
+    }
+
 }
 
 function animation(ctx, image, w, h, x, y, frame, flip)
@@ -47,6 +81,7 @@ function animation(ctx, image, w, h, x, y, frame, flip)
     }
     else
     {
+        console.log(image);
         ctx.drawImage( image, frame * w, 0, w, h, x, y, 128, 256 );
     }
 }
