@@ -54,6 +54,11 @@ connection.onmessage = function( message )
         li.appendChild( message );
         document.getElementById( "message-list" ).appendChild( li );
     }
+    else if( msgParsed.type === 'id')
+    {
+        objects[0].id = msgParsed.data;
+        console.log("My id is: " + objects[0].id);
+    }
 };
 
 //---------- LOGIC APP -----------
@@ -143,7 +148,8 @@ function init()
         flip: false,
         frame: idle,
         vel: 50,
-        img: img
+        img: img,
+        id: null
     };
 
     objects.push(user);
@@ -184,6 +190,7 @@ function sendMsg()
     var text = document.getElementById("message-input").value;
     var message = {
         type: 'msg',
+        id: objects[0].id,
         data: text
     }
 

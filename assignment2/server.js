@@ -23,6 +23,11 @@ wsServer.on('request', function(request){
     console.log("new websocket user!");
 
     var index = clients.push(connection) - 1;
+    userId = {
+        type: "id",
+        data: index
+    }
+    connection.send(JSON.stringify(userId));
     console.log("index: " + index + " length: " + clients.length);
 
     console.log("connection accepted");
@@ -47,7 +52,10 @@ wsServer.on('request', function(request){
                 console.log( "message type msg received on server!" );
                 for( var i = 0; i <= index; i++ )
                 {
-                    clients[i].send( message.utf8Data );
+                    if(i != msg.id)
+                    {
+                        clients[i].send( message.utf8Data );
+                    }
                 }
             }
         }
@@ -55,5 +63,6 @@ wsServer.on('request', function(request){
 
     connection.on('close', function(connection){
         console.log("user is gone");
+
     });
 });
