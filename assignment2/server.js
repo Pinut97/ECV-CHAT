@@ -36,11 +36,19 @@ wsServer.on('request', function(request){
             if(msg.type === 'init')
             {
                 console.log("This is an init message");
-                for(var i = 0; i <= index; i++)
+                for(var i = 0; i < index; i++)
                 {
                     clients[i].send(message.utf8Data);
                 }
                 
+            }
+            else if( msg.type === 'msg' )
+            {
+                console.log( "message type msg received on server!" );
+                for( var i = 0; i <= index; i++ )
+                {
+                    clients[i].send( message.utf8Data );
+                }
             }
         }
     });

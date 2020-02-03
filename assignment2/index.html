@@ -1,9 +1,29 @@
 <html>
     <head></head>
     <header></header>    
-    <body>
+
+    <link rel="stylesheet" type="text/css" href="grid.css">
+    <div class="wrapper">
+
+        <!--Here comes the canvas part-->
         <script src="server.js"></script>
-        <canvas id="myCanvas"></canvas>
-        <script src="code.js"></script>
-    </body>
+        <div class="canvas">
+
+            <canvas id="myCanvas"></canvas>
+        </div>
+
+        <!--Here comes the chat part-->
+        <div class="chat">
+            <div class="messages">
+                <ul id="message-list">
+
+                </ul>
+            </div>
+            <div class="input">
+                <input type="text" name="msg" placeholder="Write" id="message-input">
+                <a href="#" class="myButton" id="add" onclick="sendMsg()">SEND</a>
+            </div>
+        </div>        
+    </div>
+    <script src="code.js"></script>
 </html>
