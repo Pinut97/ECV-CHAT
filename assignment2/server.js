@@ -50,7 +50,8 @@ wsServer.on('request', function(request){
             else if( msg.type === 'msg' )
             {
                 console.log( "message type msg received on server!" );
-                for( var i = 0; i <= index; i++ )
+                console.log("Clients length: " + clients.length);
+                for( var i = 0; i < clients.length; i++ )
                 {
                     if(i != msg.id)
                     {
