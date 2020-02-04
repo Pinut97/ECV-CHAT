@@ -7,19 +7,24 @@
 
         <!--Here comes the canvas part-->
         <div class="canvas">
-
             <canvas id="myCanvas"></canvas>
         </div>
 
         <!--Here comes the chat part-->
         <div class="chat">
+            <div>
+                <p style="margin-left: 10px; margin-bottom: 5px;">CHOOSE YOUR NICKNAME</p>
+                <input type="text" placeholder="User Name" class="input" id="connect">
+                <a href="#" class="myButton" id="add" onclick="connect()">CONNECT</a>
+            </div>
+
             <div class="messages">
                 <ul id="message-list">
 
                 </ul>
             </div>
-            <div class="input">
-                <input type="text" name="msg" placeholder="Write" id="message-input">
+            <div>
+                <input type="text" name="msg" placeholder="Write" class="input" id="message-input">
                 <a href="#" class="myButton" id="add" onclick="sendMsg()">SEND</a>
             </div>
         </div>        

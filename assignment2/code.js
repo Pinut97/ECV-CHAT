@@ -2,31 +2,42 @@
 
 //----------- SERVER PART -------------
 
-var connection = new WebSocket('ws://127.0.0.1:9022');
-
-connection.onopen = function()
+//get the nickname of the user and connect to the server
+function connect()
 {
-    console.log("user is in!");
+    var name = document.getElementById("connect").value;
+    var connection = new WebSocket('ws://127.0.0.1:9022');
 
-    //main app loop
-    init();
+    connection.onopen = function()
+    {
+        //main app loop
+        init( name );
+    
+        var msg = {
+            user_name: objects[0].name,
+            position: objects[0].posX,
+            type: 'init',
+            index: objects[0].index
+        };
+    
+        connection.send(JSON.stringify(msg));
+        loop();
+    }
+};
 
+function sendInitMessage()
+{
     var msg = {
-        position: objects[0].posX,
+        user_name: objects[0].name,
         type: 'init',
+        position: objects[0].posX,
         index: objects[0].index
-    };
-
-    connection.send(JSON.stringify(msg));
-    loop();
-}
+    }
+};
 
 connection.onmessage = function( message )
 {
-    console.log( message.data );
-    console.log( "user received message: " + message.data );
     var msgParsed = JSON.parse( message.data );
-    console.log( msgParsed );
 
     if( msgParsed.type === 'init')
     {
@@ -48,7 +59,7 @@ connection.onmessage = function( message )
     }
     else if ( msgParsed.type === 'msg')
     {
-        var message = document.createTextNode( msgParsed.data );
+        var message = document.createTextNode( msgParsed.name + ": " + msgParsed.data );
         var li = document.createElement( "LI" );
         li.setAttribute("id", "otherMessage")
         li.appendChild( message );
@@ -57,7 +68,6 @@ connection.onmessage = function( message )
     else if( msgParsed.type === 'id')
     {
         objects[0].id = msgParsed.data;
-        console.log("My id is: " + objects[0].id);
     }
 };
 
@@ -72,6 +82,8 @@ var last = performance.now();
 var objects = [];
 var idle = [0];
 var walking = [2, 3, 4, 5, 6, 7, 8];
+var sprite_list = ["man1-spritesheet.png", "man2-spritesheet.png", "man3-spritesheet.png", "man4-spritesheet.png",
+        "woman1-spritesheet.png", "woman2-spritesheet.png", "woman3-spritesheet.png", "woman4-spritesheet.png"]
 
 function draw()
 {
@@ -86,7 +98,6 @@ function draw()
         animation(ctx, objects[i].img, 32, 64, objects[i].posX, objects[i].posY, objects[i].frame[t % objects[i].frame.length], objects[i].flip);
     }
 }
-
 function animation(ctx, image, w, h, x, y, frame, flip)
 {
     if(flip)
@@ -126,20 +137,20 @@ function update( dt )
 };
 
 //init the app with the creation of the user
-function init()
+function init(name)
 {
-
+    //init canvas size
     var parent = canvas.parentNode;
     var rect = parent.getBoundingClientRect();
     canvas.width = rect.width;
     canvas.height = rect.height;
 
-    var index = Math.floor((Math.random() * 4) + 1);
-
     var img = new Image();
-    img.src = "spritesheets/man" + index + "-spritesheet.png";
+    var index = Math.floor(Math.random * 8)
+    img.src = sprite_list[index]; //generate random sprite for the character
 
     user = {
+        user_name: name,
         posX: canvas.width * 0.5,
         posY: canvas.height * 0.5,
         goalPosX: canvas.width * 0.5,
@@ -189,6 +200,7 @@ function sendMsg()
 {
     var text = document.getElementById("message-input").value;
     var message = {
+        name: objects[0].name,
         type: 'msg',
         id: objects[0].id,
         data: text
@@ -214,4 +226,5 @@ input.addEventListener("keyup", function(event) {
         document.getElementById("add").click();
     }
 });
+
 

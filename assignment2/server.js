@@ -28,9 +28,6 @@ wsServer.on('request', function(request){
         data: index
     }
     connection.send(JSON.stringify(userId));
-    console.log("index: " + index + " length: " + clients.length);
-
-    console.log("connection accepted");
 
     connection.on('message', function(message){
         if(message.type === 'utf8'){
@@ -40,10 +37,13 @@ wsServer.on('request', function(request){
             //act depending on type
             if(msg.type === 'init')
             {
-                console.log("This is an init message");
-                for(var i = 0; i < index; i++)
+                for(var i = 0; i < clients.length; i++)
                 {
-                    clients[i].send(message.utf8Data);
+                    if(i != msg.id)
+                    {
+                        clients[i].send( message.utf8Data );
+                    }
+                    
                 }
                 
             }

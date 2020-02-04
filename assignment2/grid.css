@@ -41,7 +41,7 @@
 
 .messages {
     padding: 5px;
-    height: 90%;
+    height: 85%;
 }
 
 .message-list{
@@ -49,13 +49,28 @@
     padding-inline-start: 0px;
 }
 
-#message-input{
+.input {
     border-radius: 5px;
     width: 70%;
     height: 25px;
     flex-grow: 1;
     margin-left: 5px;
     margin-right: 10px;
+}
+
+#connect {
+    margin-top: 2px;
+}
+
+#message-input{
+    /*
+    border-radius: 5px;
+    width: 70%;
+    height: 25px;
+    flex-grow: 1;
+    margin-left: 5px;
+    margin-right: 10px;
+    */
   }
 
 .myButton {
