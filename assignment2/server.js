@@ -24,7 +24,7 @@ wsServer.on('request', function(request){
 
     var index = clients.push(connection) - 1;
     userId = {
-        type: "id",
+        type: 'id',
         data: index
     }
     connection.send(JSON.stringify(userId));
@@ -37,15 +37,14 @@ wsServer.on('request', function(request){
             //act depending on type
             if(msg.type === 'init')
             {
+                console.log("message init received with id " + msg.id);
                 for(var i = 0; i < clients.length; i++)
                 {
                     if(i != msg.id)
                     {
                         clients[i].send( message.utf8Data );
                     }
-                    
                 }
-                
             }
             else if( msg.type === 'msg' )
             {

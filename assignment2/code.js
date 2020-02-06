@@ -19,10 +19,14 @@ function connect()
                 user_name: objects[0].name,
                 position: objects[0].posX,
                 type: 'init',
-                index: objects[0].index
+                imageIndex: objects[0].imageIndex,
+                id: objects[0].id
             };
         
             connection.send(JSON.stringify(msg));
+
+            console.log("makes init and sends message");
+
             loop();
         };
     
@@ -32,20 +36,22 @@ function connect()
     
             if( msgParsed.type === 'init')
             {
-                var img = new Image();
-                img.src = sprite_list[msgParsed.index]
+                //var img = new Image();
+                //img.src = sprite_list[msgParsed.imageIndex]
     
+                //add new instance of user
                 var user = {
                     posX: msgParsed.position,
                     posY: canvas.height * 0.5,
                     goalPosX: msgParsed.position,
                     goalPosY: canvas.height * 0.5,
-                    imageIndex: msgParsed.index,
+                    imageIndex: msgParsed.imageIndex,
                     flip: false,
                     frame: idle,
                     vel: 50,
+                    //img: img
                 }
-                objects.push(user);
+                objects.push(user); 
             }
             else if ( msgParsed.type === 'msg')
             {
@@ -58,22 +64,13 @@ function connect()
             else if( msgParsed.type === 'id')
             {
                 objects[0].id = msgParsed.data;
+                console.log("id received: " + msgParsed.data);
             }
         };
     }
     else
     {
         alert( "Name is empty" );
-    }
-};
-
-function sendInitMessage()
-{
-    var msg = {
-        user_name: objects[0].name,
-        type: 'init',
-        position: objects[0].posX,
-        index: objects[0].index
     }
 };
 
@@ -153,9 +150,9 @@ function init(name)
     canvas.width = rect.width;
     canvas.height = rect.height;
 
-    var img = new Image();
+    //var img = new Image();
     var index = Math.floor(Math.random() * 8)
-    img.src = sprite_list[index]; //generate random sprite for the character
+    //img.src = sprite_list[index]; //generate random sprite for the character
 
     user = {
         user_name: name,
@@ -163,11 +160,10 @@ function init(name)
         posY: canvas.height * 0.5,
         goalPosX: canvas.width * 0.5,
         goalPosY: canvas.height * 0.5,
-        index: index,
+        imageIndex: index,
         flip: false,
         frame: idle,
         vel: 50,
-        img: img,
         id: null
     };
 
@@ -178,6 +174,10 @@ function init(name)
 function loop()
 {
     draw();
+
+    var frame = 0;
+    console.log("frame: " + frame);
+    frame++;
 
     //calculate time elapsed
     var now = performance.now();
@@ -195,7 +195,7 @@ function onMouse ( e )
     var canvasx = e.clientX - rect.left;
     var o = objects[0]; //tenir en compte id del user
 
-    if(e.type == 'mouseclick')
+    if(e.type == 'click')
     {
         o.goalPosX = canvasx;
     }
