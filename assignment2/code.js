@@ -14,6 +14,7 @@ function connect()
         {
             //main app loop
             init( name );
+            connected = true;
         
             var msg = {
                 user_name: objects[0].name,
@@ -30,7 +31,7 @@ function connect()
         {
             var msgParsed = JSON.parse( message.data );
     
-            if( msgParsed.type === 'init')
+            if( msgParsed.type === 'init')  //initialize the user when init
             {
                 var img = new Image();
                 img.src = sprite_list[msgParsed.index]
@@ -47,7 +48,7 @@ function connect()
                 }
                 objects.push(user);
             }
-            else if ( msgParsed.type === 'msg')
+            else if ( msgParsed.type === 'msg') //receive the message and show it
             {
                 var message = document.createTextNode( msgParsed.name + ": " + msgParsed.data );
                 var li = document.createElement( "LI" );
@@ -55,7 +56,7 @@ function connect()
                 li.appendChild( message );
                 document.getElementById( "message-list" ).appendChild( li );
             }
-            else if( msgParsed.type === 'id')
+            else if( msgParsed.type === 'id')   //give the id to the user
             {
                 objects[0].id = msgParsed.data;
             }
@@ -81,6 +82,7 @@ function sendInitMessage()
 
 var canvas = document.getElementById("myCanvas");
 var rect;
+var connected = false;
 
 var messageHistory = [];
 
@@ -195,7 +197,7 @@ function onMouse ( e )
     var canvasx = e.clientX - rect.left;
     var o = objects[0]; //tenir en compte id del user
 
-    if(e.type == 'mouseclick')
+    if(e.type == 'click' && connected)
     {
         o.goalPosX = canvasx;
     }
