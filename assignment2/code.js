@@ -6,22 +6,64 @@
 function connect()
 {
     var name = document.getElementById("connect").value;
-    var connection = new WebSocket('ws://127.0.0.1:9022');
-
-    connection.onopen = function()
+    if( name )
     {
-        //main app loop
-        init( name );
-    
-        var msg = {
-            user_name: objects[0].name,
-            position: objects[0].posX,
-            type: 'init',
-            index: objects[0].index
+        var connection = new WebSocket('ws://127.0.0.1:9022');
+
+        connection.onopen = function()
+        {
+            //main app loop
+            init( name );
+        
+            var msg = {
+                user_name: objects[0].name,
+                position: objects[0].posX,
+                type: 'init',
+                index: objects[0].index
+            };
+        
+            connection.send(JSON.stringify(msg));
+            loop();
         };
     
-        connection.send(JSON.stringify(msg));
-        loop();
+        connection.onmessage = function( message )
+        {
+            var msgParsed = JSON.parse( message.data );
+    
+            if( msgParsed.type === 'init')
+            {
+                var img = new Image();
+                img.src = sprite_list[msgParsed.index]
+    
+                var user = {
+                    posX: msgParsed.position,
+                    posY: canvas.height * 0.5,
+                    goalPosX: msgParsed.position,
+                    goalPosY: canvas.height * 0.5,
+                    imageIndex: msgParsed.index,
+                    flip: false,
+                    frame: idle,
+                    vel: 50,
+                }
+                objects.push(user);
+            }
+            else if ( msgParsed.type === 'msg')
+            {
+                var message = document.createTextNode( msgParsed.name + ": " + msgParsed.data );
+                var li = document.createElement( "LI" );
+                li.setAttribute("id", "otherMessage")
+                li.appendChild( message );
+                document.getElementById( "message-list" ).appendChild( li );
+            }
+            else if( msgParsed.type === 'id')
+            {
+                objects[0].id = msgParsed.data;
+            }
+        };
+    }
+    else
+    {
+        alert( "Name is empty" );
     }
 };
 
@@ -32,42 +74,6 @@ function sendInitMessage()
         type: 'init',
         position: objects[0].posX,
         index: objects[0].index
-    }
-};
-
-connection.onmessage = function( message )
-{
-    var msgParsed = JSON.parse( message.data );
-
-    if( msgParsed.type === 'init')
-    {
-        var img = new Image();
-        img.src = "spritesheets/man" + msgParsed.index + "-spritesheet.png";
-
-        var user = {
-            posX: msgParsed.position,
-            posY: canvas.height * 0.5,
-            goalPosX: msgParsed.position,
-            goalPosY: canvas.height * 0.5,
-            index: msgParsed.index,
-            flip: false,
-            frame: idle,
-            vel: 50,
-            img: img
-        }
-        objects.push(user);
-    }
-    else if ( msgParsed.type === 'msg')
-    {
-        var message = document.createTextNode( msgParsed.name + ": " + msgParsed.data );
-        var li = document.createElement( "LI" );
-        li.setAttribute("id", "otherMessage")
-        li.appendChild( message );
-        document.getElementById( "message-list" ).appendChild( li );
-    }
-    else if( msgParsed.type === 'id')
-    {
-        objects[0].id = msgParsed.data;
     }
 };
 
@@ -82,8 +88,8 @@ var last = performance.now();
 var objects = [];
 var idle = [0];
 var walking = [2, 3, 4, 5, 6, 7, 8];
-var sprite_list = ["man1-spritesheet.png", "man2-spritesheet.png", "man3-spritesheet.png", "man4-spritesheet.png",
-        "woman1-spritesheet.png", "woman2-spritesheet.png", "woman3-spritesheet.png", "woman4-spritesheet.png"]
+var sprite_list = ["spritesheets/man1-spritesheet.png", "spritesheets/man2-spritesheet.png", "spritesheets/man3-spritesheet.png", "spritesheets/man4-spritesheet.png",
+        "spritesheets/woman1-spritesheet.png", "spritesheets/woman2-spritesheet.png", "spritesheets/woman3-spritesheet.png", "spritesheets/woman4-spritesheet.png"]
 
 function draw()
 {
@@ -95,11 +101,13 @@ function draw()
 
     for(var i = 0; i < objects.length; i++)
     {
-        animation(ctx, objects[i].img, 32, 64, objects[i].posX, objects[i].posY, objects[i].frame[t % objects[i].frame.length], objects[i].flip);
+        animation(ctx, sprite_list[objects[i].imageIndex] , 32, 64, objects[i].posX, objects[i].posY, objects[i].frame[t % objects[i].frame.length], objects[i].flip);
     }
 }
-function animation(ctx, image, w, h, x, y, frame, flip)
+function animation(ctx, img, w, h, x, y, frame, flip)
 {
+    var image = new Image();
+    image.src = img;
     if(flip)
     {
         ctx.drawImage( image, frame * w, 2*h, w, h, x, y, 128, 256 );
@@ -146,7 +154,7 @@ function init(name)
     canvas.height = rect.height;
 
     var img = new Image();
-    var index = Math.floor(Math.random * 8)
+    var index = Math.floor(Math.random() * 8)
     img.src = sprite_list[index]; //generate random sprite for the character
 
     user = {
@@ -187,7 +195,7 @@ function onMouse ( e )
     var canvasx = e.clientX - rect.left;
     var o = objects[0]; //tenir en compte id del user
 
-    if(e.type == 'click')
+    if(e.type == 'mouseclick')
     {
         o.goalPosX = canvasx;
     }
