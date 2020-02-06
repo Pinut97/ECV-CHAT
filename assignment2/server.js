@@ -63,6 +63,5 @@ wsServer.on('request', function(request){
 
     connection.on('close', function(connection){
         console.log("user is gone");
-
     });
 });
