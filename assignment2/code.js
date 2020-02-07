@@ -3,77 +3,81 @@
 //----------- SERVER PART -------------
 
 //get the nickname of the user and connect to the server
+var connection;
+
 function connect()
 {
     var name = document.getElementById("connect").value;
     if( name )
     {
-        var connection = new WebSocket('ws://127.0.0.1:9022');
-
-        connection.onopen = function()
-        {
-            //main app loop
-            init( name );
-            connected = true;
-        
-            var msg = {
-                user_name: objects[0].name,
-                position: objects[0].posX,
-                type: 'init',
-                imageIndex: objects[0].imageIndex,
-                id: objects[0].id
-            };
-        
-            connection.send(JSON.stringify(msg));
-
-            console.log("makes init and sends message");
-
-            loop();
-        };
-    
-        connection.onmessage = function( message )
-        {
-            var msgParsed = JSON.parse( message.data );
-    
-            if( msgParsed.type === 'init')  //initialize the user when init
-            {
-                //var img = new Image();
-                //img.src = sprite_list[msgParsed.imageIndex]
-    
-                //add new instance of user
-                var user = {
-                    posX: msgParsed.position,
-                    posY: canvas.height * 0.5,
-                    goalPosX: msgParsed.position,
-                    goalPosY: canvas.height * 0.5,
-                    imageIndex: msgParsed.imageIndex,
-                    flip: false,
-                    frame: idle,
-                    vel: 50,
-                    //img: img
-                }
-                objects.push(user); 
-            }
-            else if ( msgParsed.type === 'msg') //receive the message and show it
-            {
-                var message = document.createTextNode( msgParsed.name + ": " + msgParsed.data );
-                var li = document.createElement( "LI" );
-                li.setAttribute("id", "otherMessage")
-                li.appendChild( message );
-                document.getElementById( "message-list" ).appendChild( li );
-            }
-            else if( msgParsed.type === 'id')   //give the id to the user
-            {
-                objects[0].id = msgParsed.data;
-                console.log("id received: " + msgParsed.data);
-            }
-        };
+        connection = new WebSocket('ws://127.0.0.1:9022');
     }
     else
     {
         alert( "Name is empty" );
     }
+
+    connection.onopen = function()
+    {
+        //main app loop
+        init( name, connection );
+        connected = true;
+
+        loop();
+    };
+
+    connection.onmessage = function( message )
+    {
+        var msgParsed = JSON.parse( message.data );
+        console.log(msgParsed);
+
+        if( msgParsed.type === 'init' )  //initialize the user when init
+        {
+            console.log("New user added on init");
+            console.log( msgParsed );
+
+            //add new instance of user
+            var user = {
+                name: msgParsed.name,
+                posX: msgParsed.position,
+                posY: canvas.height * 0.5,
+                goalPosX: msgParsed.position,
+                goalPosY: canvas.height * 0.5,
+                imageIndex: msgParsed.imageIndex,
+                flip: false,
+                frame: idle,
+                vel: 50,
+                id: msgParsed.id
+            }
+            objects.push(user);
+        }
+        else if ( msgParsed.type === 'msg') //receive the message and show it
+        {
+            var message = document.createTextNode( msgParsed.name + ": " + msgParsed.data );
+            var li = document.createElement( "LI" );
+            li.setAttribute("id", "otherMessage")
+            li.appendChild( message );
+            document.getElementById( "message-list" ).appendChild( li );
+        }
+        else if( msgParsed.type === 'id')   //give the id to the user
+        {
+            objects[0].id = msgParsed.data;
+        }
+    };
 };
+
+function sendInitInfoToServer( connection )
+{
+    var msg = {
+        user_name: objects[0].name,
+        position: objects[0].posX,
+        type: 'init',
+        imageIndex: objects[0].imageIndex,
+        id: objects[0].id
+    };
+
+    connection.send(JSON.stringify(msg));
+}
 
 //---------- LOGIC APP -----------
 
@@ -144,7 +148,7 @@ function update( dt )
 };
 
 //init the app with the creation of the user
-function init(name)
+function init( name, connection )
 {
     //init canvas size
     var parent = canvas.parentNode;
@@ -152,9 +156,7 @@ function init(name)
     canvas.width = rect.width;
     canvas.height = rect.height;
 
-    //var img = new Image();
     var index = Math.floor(Math.random() * 8)
-    //img.src = sprite_list[index]; //generate random sprite for the character
 
     user = {
         user_name: name,
@@ -170,16 +172,15 @@ function init(name)
     };
 
     objects.push(user);
+
+    sendInitInfoToServer( connection );
+
 };
 
 //main app loop
 function loop()
 {
     draw();
-
-    var frame = 0;
-    console.log("frame: " + frame);
-    frame++;
 
     //calculate time elapsed
     var now = performance.now();

@@ -4,6 +4,7 @@ var http = require('http');
 var WebSocketServer = require('websocket').server;
 
 var clients = [];
+var users = [];
 
 var server = http.createServer(function(request, response){
     console.log("REQUEST: " + request.url);
@@ -23,11 +24,6 @@ wsServer.on('request', function(request){
     console.log("new websocket user!");
 
     var index = clients.push(connection) - 1;
-    userId = {
-        type: 'id',
-        data: index
-    }
-    connection.send(JSON.stringify(userId));
 
     connection.on('message', function(message){
         if(message.type === 'utf8'){
@@ -37,14 +33,8 @@ wsServer.on('request', function(request){
             //act depending on type
             if(msg.type === 'init')
             {
-                console.log("message init received with id " + msg.id);
-                for(var i = 0; i < clients.length; i++)
-                {
-                    if(i != msg.id)
-                    {
-                        clients[i].send( message.utf8Data );
-                    }
-                }
+                //send info of the new user to all users including the new one since id has to be assigned
+                addNewUser( msg, index );
             }
             else if( msg.type === 'msg' )
             {
@@ -65,3 +55,29 @@ wsServer.on('request', function(request){
         console.log("user is gone");
     });
 });
+
+function addNewUser( msg, index )
+{
+    var newUser = {
+        type: 'init',
+        name: msg.user_name,
+        id: index,
+        position: msg.position,
+        imageIndex: msg.imageIndex
+    }
+
+    users.push( newUser );
+
+    for(var i = 0; i < clients.length - 1; i++)
+    {
+        clients[i].send( JSON.stringify(newUser) );
+    }
+
+    var msg = {
+        type: 'id',
+        data: index
+    }
+
+    clients[clients.length - 1].send(JSON.stringify( msg ));
+
+};
