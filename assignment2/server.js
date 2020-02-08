@@ -89,16 +89,22 @@ wsServer.on('request', function(request){
             if( users[i].id === index )
             {
                 console.log( users.length );
-                console.log( users[i] );
-                users.splice( users.indexOf( users[i] ), 1 );
+                console.log("pre splice: " + users);
+                console.log("pre splice clients: " + clients);
+                users.splice( i, 1 );
+                console.log("post splice: " + users);
+                console.log("post splice: " + clients);
                 break;
             }
         }
+
+        console.log(users);
 
         for( var i = 0; i < clients.length; i++ )
         {
             clients[i].send( JSON.stringify( logout ));
         }
+        clients.splice( clients.indexOf( connection ), 1 );
     });
 });
 
