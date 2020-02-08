@@ -5,9 +5,11 @@
 //get the nickname of the user and connect to the server
 var connection;
 
+//user clicks connect button
 function connect()
 {
     var name = document.getElementById("connect").value;
+    //check that a username has been introduced
     if( name )
     {
         connection = new WebSocket('ws://127.0.0.1:9022');
@@ -17,6 +19,7 @@ function connect()
         alert( "Name is empty" );
     }
 
+    //start of the connection
     connection.onopen = function()
     {
         //main app loop
@@ -26,6 +29,7 @@ function connect()
         loop();
     };
 
+    //server message manager
     connection.onmessage = function( message )
     {
         var msgParsed = JSON.parse( message.data );
@@ -33,7 +37,6 @@ function connect()
 
         if( msgParsed.type === 'init' )  //initialize the user when init
         {
-            console.log("New user added on init");
             console.log( msgParsed );
 
             //add new instance of user
@@ -51,7 +54,7 @@ function connect()
             }
             objects.push(user);
         }
-        else if ( msgParsed.type === 'msg') //receive the message and show it
+        else if ( msgParsed.type === 'msg') //chat message from another user
         {
             var message = document.createTextNode( msgParsed.name + ": " + msgParsed.data );
             var li = document.createElement( "LI" );
@@ -59,17 +62,21 @@ function connect()
             li.appendChild( message );
             document.getElementById( "message-list" ).appendChild( li );
         }
-        else if( msgParsed.type === 'id')   //give the id to the user
+        else if( msgParsed.type === 'id')   //server returns id from the user (after init)
         {
             objects[0].id = msgParsed.data;
+        }
+        else if ( msgParsed.type === 'prevUser') { //receives data from a user connected before this one
+            objects.push(msgParsed.data);
         }
     };
 };
 
-function sendInitInfoToServer( connection )
+//send init info to server
+function sendInitInfoToServer( connection ) 
 {
     var msg = {
-        user_name: objects[0].name,
+        name: objects[0].name,
         position: objects[0].posX,
         type: 'init',
         imageIndex: objects[0].imageIndex,
@@ -94,6 +101,7 @@ var walking = [2, 3, 4, 5, 6, 7, 8];
 var sprite_list = ["spritesheets/man1-spritesheet.png", "spritesheets/man2-spritesheet.png", "spritesheets/man3-spritesheet.png", "spritesheets/man4-spritesheet.png",
         "spritesheets/woman1-spritesheet.png", "spritesheets/woman2-spritesheet.png", "spritesheets/woman3-spritesheet.png", "spritesheets/woman4-spritesheet.png"]
 
+//draw avatars
 function draw()
 {
     var ctx = canvas.getContext('2d');
@@ -104,6 +112,7 @@ function draw()
 
     for(var i = 0; i < objects.length; i++)
     {
+        console.log("Objeto: " + objects[i]);
         animation(ctx, sprite_list[objects[i].imageIndex] , 32, 64, objects[i].posX, objects[i].posY, objects[i].frame[t % objects[i].frame.length], objects[i].flip);
     }
 }
@@ -121,6 +130,7 @@ function animation(ctx, img, w, h, x, y, frame, flip)
     }
 }
 
+//calculate movement of avatars
 function update( dt )
 {
     var o = objects[0];
@@ -158,8 +168,9 @@ function init( name, connection )
 
     var index = Math.floor(Math.random() * 8)
 
+    //creation of the user info
     user = {
-        user_name: name,
+        name: name,
         posX: canvas.width * 0.5,
         posY: canvas.height * 0.5,
         goalPosX: canvas.width * 0.5,

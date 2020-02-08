@@ -25,12 +25,13 @@ wsServer.on('request', function(request){
 
     var index = clients.push(connection) - 1;
 
+    //client messages manager
     connection.on('message', function(message){
         if(message.type === 'utf8'){
             //parse the message
             var msg = JSON.parse(message.utf8Data);
 
-            //act depending on type
+            //act according to message type
             if(msg.type === 'init')
             {
                 //send info of the new user to all users including the new one since id has to be assigned
@@ -56,11 +57,12 @@ wsServer.on('request', function(request){
     });
 });
 
+//Add new user when init message is sent by a new client
 function addNewUser( msg, index )
 {
     var newUser = {
         type: 'init',
-        name: msg.user_name,
+        name: msg.name,
         id: index,
         position: msg.position,
         imageIndex: msg.imageIndex
@@ -68,9 +70,19 @@ function addNewUser( msg, index )
 
     users.push( newUser );
 
+    
     for(var i = 0; i < clients.length - 1; i++)
     {
-        clients[i].send( JSON.stringify(newUser) );
+        clients[i].send( JSON.stringify(newUser) ); //send the information of new user to all other users
+
+        var prevUser = {
+            type: 'prevUser',
+            data: users[i]
+        };
+
+        console.log(prevUser);
+
+        clients[clients.length - 1].send( JSON.stringify(prevUser)); //send the information of other users to the new user
     }
 
     var msg = {
