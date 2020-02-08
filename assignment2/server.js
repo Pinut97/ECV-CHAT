@@ -150,8 +150,6 @@ function addNewUser( msg, index )
     
     for(var i = 0; i < clients.length - 1; i++)
     {
-        console.log( "mierda" );
-        console.log( "Inside the add user: " + users[i] );
         clients[i].send( JSON.stringify( newUser ));    //send the information of new user to all other users
         clients[i].send( JSON.stringify( welcome ));    //send message user has connected to all users
         clients[clients.length - 1].send( JSON.stringify( users[i] ));    //send the information of other users to the new user

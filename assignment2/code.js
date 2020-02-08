@@ -67,7 +67,16 @@ function connect()
         }
         else if ( msgParsed.type === 'msg' ) //chat message from another user
         {
-            createMessage( msgParsed );
+            for( var i = 0; i < objects.length; i++ )
+            {
+                if( objects[i].id === msgParsed.id )
+                {
+                    if( Math.abs(objects[0].posX - objects[i].posX) < distance )
+                    {
+                        createMessage( msgParsed );
+                    }
+                }
+            }
         }
         else if( msgParsed.type === 'id' )   //server returns id from the user (after init)
         {
@@ -118,6 +127,7 @@ function sendInitInfoToServer( connection )
 var canvas = document.getElementById("myCanvas");
 var rect;
 var connected = false;
+var distance = 200;
 
 var messageHistory = [];
 
