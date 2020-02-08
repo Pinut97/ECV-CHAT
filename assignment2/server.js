@@ -59,8 +59,36 @@ wsServer.on('request', function(request){
 
     connection.on('close', function(connection){
         console.log("user is gone");
+
+        var auxiliar_user = findUserByIndex( index );
+
+        var logout = {
+            type: 'logout',
+            id: index,
+            name: auxiliar_user.name
+        }
+
+        for( var i = 0; i < clients.length; i++ )
+        {
+            if( users[i].id === index )
+            {
+                users.pop( users[i] );
+            }
+            clients[i].send( JSON.stringify( logout ));
+        }
     });
 });
+
+function findUserByIndex( index )
+{
+    for( var i = 0; i < users.length; i++ )
+    {
+        if ( users[i].id === index )
+        {
+            return users[i];
+        }
+    }
+};
 
 //Add new user when init message is sent by a new client
 function addNewUser( msg, index )

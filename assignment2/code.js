@@ -69,6 +69,18 @@ function connect()
                 }
             }
         }
+        else if( msgParsed.type === 'logout' )
+        {
+            for( var i = 0; i < objects.length; i++ )
+            {
+                if( objects[i].id === msgParsed.id )
+                {
+                    objects.pop( objects[i] );
+                    break;
+                }
+            }
+            createMessage( msgParsed );
+        }
     };
 };
 
@@ -218,7 +230,7 @@ function onMouse ( e )
     var canvasx = e.clientX - rect.left;
     var o = objects[0]; //tenir en compte id del user
 
-    if(e.type == 'click' && connected)
+    if( e.type == 'click' && connected && canvasx < rect.right )
     {
         o.goalPosX = canvasx;
         var msgUpdate = {
@@ -236,23 +248,26 @@ document.body.addEventListener('click', onMouse);
 function sendMsg()
 {
     var text = document.getElementById("message-input").value;
-    var message = {
-        name: objects[0].name,
-        type: 'msg',
-        id: objects[0].id,
-        data: text
+    if( text )
+    {
+        var message = {
+            name: objects[0].name,
+            type: 'msg',
+            id: objects[0].id,
+            data: text
+        }
+    
+        messageHistory.push( message ); //add message to historic
+    
+        var li = document.createElement( "li" );
+        li.textContent = "You: " + text;
+        li.setAttribute("id", "ownMessage");
+        document.getElementById( "message-list" ).appendChild( li );
+    
+        connection.send(JSON.stringify(message));
+    
+        document.getElementById("message-input").value = "";
     }
-
-    messageHistory.push( message ); //add message to historic
-
-    var li = document.createElement( "li" );
-    li.textContent = "You: " + text;
-    li.setAttribute("id", "ownMessage");
-    document.getElementById( "message-list" ).appendChild( li );
-
-    connection.send(JSON.stringify(message));
-
-    document.getElementById("message-input").value = "";
 };
 
 //code to send messages with the enter button
@@ -270,6 +285,10 @@ function createMessage( msgParsed )
     {
         var message = document.createTextNode( msgParsed.data );
     }
+    else if( msgParsed.type === 'logout' )
+    {
+        var message = document.createTextNode( msgParsed.name + " has disconnected!" );
+    }
     else{
         var message = document.createTextNode( msgParsed.name + ": " + msgParsed.data );
     }
@@ -278,6 +297,16 @@ function createMessage( msgParsed )
     li.setAttribute("id", "otherMessage")
     li.appendChild( message );
     document.getElementById( "message-list" ).appendChild( li );
-}
+};
 
+function deleteUser( msgParsed )
+{
+    objects.pop( objects.find( msgParsed.id ));
+    
+    var user_disconnected = {
+        type: 'info',
+        data: msgParsed.name + " has disconnected!"
+    }
 
+    createMessage( user_disconnected );
+};
