@@ -34,8 +34,9 @@ function connect()
     {
         var msgParsed = JSON.parse( message.data );
 
-        if( msgParsed.type === 'prevUser' || msgParsed.type === 'init' )  //initialize the user when init
+        if( msgParsed.type === 'init' )  //initialize the user when init
         {
+            console.log("Mi posición: " + msgParsed.position);
             //add new instance of user
             var user = {
                 name: msgParsed.name,
@@ -50,6 +51,17 @@ function connect()
                 id: msgParsed.id
             }
             objects.push(user);
+        }
+        else if ( msgParsed.type === 'posRequest')
+        {
+            console.log("Pos Request JIJIJIJ: " + objects[0].posX);
+            var userPosition = {
+                type: 'posRequest',
+                id: objects[0].id,
+                position: objects[0].posX
+            };
+
+            connection.send(JSON.stringify(userPosition));
         }
         else if ( msgParsed.type === 'msg' ) //chat message from another user
         {

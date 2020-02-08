@@ -5,6 +5,8 @@ var WebSocketServer = require('websocket').server;
 
 var clients = [];
 var users = [];
+var messages = [];
+var userConnected = [];
 
 var server = http.createServer(function(request, response){
     console.log("REQUEST: " + request.url);
@@ -36,9 +38,16 @@ wsServer.on('request', function(request){
             {
                 //send info of the new user to all users including the new one since id has to be assigned
                 addNewUser( msg, index );
+                for(var i = 0; i < messages.length; i++)
+                {
+                    connection.send(JSON.stringify(messages[i]));
+                }
+                
             }
             else if( msg.type === 'msg' )
             {
+                messages.push(msg);
+
                 for( var i = 0; i < clients.length; i++ )
                 {
                     if(i != msg.id)
@@ -52,6 +61,18 @@ wsServer.on('request', function(request){
                 for( var i = 0; i < clients.length; i++ )
                 {
                     clients[i].send( message.utf8Data );
+                }
+            }
+            else if( msg.type === 'posRequest')
+            {
+                console.log("SERVER POSREQUEST JIJI");
+                for(var i = 0; i < users.length; i++)
+                {
+                    if(msg.id === users[i].id)
+                    {
+                        users[i].posX = msg.position;
+                        console.log("New pos = " + users[i].posX);
+                    }                    
                 }
             }
         }
@@ -99,21 +120,27 @@ function addNewUser( msg, index )
         id: index,
         position: msg.position,
         imageIndex: msg.imageIndex
-    }
+    };
 
     var idMsg = {
         type: 'id',
         data: index
-    }
+    };
 
     var welcome = {
         type: 'msg',
         subtype: 'info',
         data: msg.name + " has connected!"
-    }
+    };
+
+    var posRequest = {
+        type: 'posRequest'
+    };
+
     console.log( msg );
 
     users.push( newUser );
+    userConnected.push(newUser);
     
     for(var i = 0; i < clients.length - 1; i++)
     {
