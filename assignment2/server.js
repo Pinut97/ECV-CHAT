@@ -39,14 +39,19 @@ wsServer.on('request', function(request){
             }
             else if( msg.type === 'msg' )
             {
-                console.log( "message type msg received on server!" );
-                console.log("Clients length: " + clients.length);
                 for( var i = 0; i < clients.length; i++ )
                 {
                     if(i != msg.id)
                     {
                         clients[i].send( message.utf8Data );
                     }
+                }
+            }
+            else if( msg.type === 'update' )
+            {
+                for( var i = 0; i < clients.length; i++ )
+                {
+                    clients[i].send( message.utf8Data );
                 }
             }
         }
@@ -68,28 +73,26 @@ function addNewUser( msg, index )
         imageIndex: msg.imageIndex
     }
 
-    users.push( newUser );
-
-    
-    for(var i = 0; i < clients.length - 1; i++)
-    {
-        clients[i].send( JSON.stringify(newUser) ); //send the information of new user to all other users
-
-        var prevUser = {
-            type: 'prevUser',
-            data: users[i]
-        };
-
-        console.log(prevUser);
-
-        clients[clients.length - 1].send( JSON.stringify(prevUser)); //send the information of other users to the new user
-    }
-
-    var msg = {
+    var idMsg = {
         type: 'id',
         data: index
     }
 
-    clients[clients.length - 1].send(JSON.stringify( msg ));
+    var welcome = {
+        type: 'msg',
+        subtype: 'info',
+        data: msg.name + " has connected!"
+    }
+    console.log( msg );
 
+    users.push( newUser );
+    
+    for(var i = 0; i < clients.length - 1; i++)
+    {
+        clients[i].send( JSON.stringify( newUser )); //send the information of new user to all other users
+        clients[i].send( JSON.stringify( welcome ));
+        clients[clients.length - 1].send( JSON.stringify(users[i])); //send the information of other users to the new user
+    }
+
+    clients[clients.length - 1].send(JSON.stringify( idMsg ));
 };

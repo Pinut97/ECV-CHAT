@@ -33,12 +33,9 @@ function connect()
     connection.onmessage = function( message )
     {
         var msgParsed = JSON.parse( message.data );
-        console.log(msgParsed);
 
-        if( msgParsed.type === 'init' )  //initialize the user when init
+        if( msgParsed.type === 'prevUser' || msgParsed.type === 'init' )  //initialize the user when init
         {
-            console.log( msgParsed );
-
             //add new instance of user
             var user = {
                 name: msgParsed.name,
@@ -54,20 +51,23 @@ function connect()
             }
             objects.push(user);
         }
-        else if ( msgParsed.type === 'msg') //chat message from another user
+        else if ( msgParsed.type === 'msg' ) //chat message from another user
         {
-            var message = document.createTextNode( msgParsed.name + ": " + msgParsed.data );
-            var li = document.createElement( "LI" );
-            li.setAttribute("id", "otherMessage")
-            li.appendChild( message );
-            document.getElementById( "message-list" ).appendChild( li );
+            createMessage( msgParsed );
         }
-        else if( msgParsed.type === 'id')   //server returns id from the user (after init)
+        else if( msgParsed.type === 'id' )   //server returns id from the user (after init)
         {
             objects[0].id = msgParsed.data;
         }
-        else if ( msgParsed.type === 'prevUser') { //receives data from a user connected before this one
-            objects.push(msgParsed.data);
+        else if( msgParsed.type === 'update' )  //update position
+        {
+            for( var i = 0; i < objects.length; i++ )
+            {
+                if( objects[i].id === msgParsed.id )
+                {
+                    objects[i].goalPosX = msgParsed.goal;
+                }
+            }
         }
     };
 };
@@ -112,10 +112,10 @@ function draw()
 
     for(var i = 0; i < objects.length; i++)
     {
-        console.log("Objeto: " + objects[i]);
         animation(ctx, sprite_list[objects[i].imageIndex] , 32, 64, objects[i].posX, objects[i].posY, objects[i].frame[t % objects[i].frame.length], objects[i].flip);
     }
-}
+};
+
 function animation(ctx, img, w, h, x, y, frame, flip)
 {
     var image = new Image();
@@ -133,27 +133,30 @@ function animation(ctx, img, w, h, x, y, frame, flip)
 //calculate movement of avatars
 function update( dt )
 {
-    var o = objects[0];
-    var aux;
-    if( o.posX != o.goalPosX)
+    for( var i = 0; i < objects.length; i++ )
     {
-        o.frame = walking;
-        if( o.posX > o.goalPosX)
+        var o = objects[i];
+        var aux;
+        if( o.posX != o.goalPosX)
         {
-            o.flip = true;
-            aux = o.posX - o.vel * dt;
-            (aux < o.goalPosX) ? o.posX = o.goalPosX : o.posX = aux; 
+            o.frame = walking;
+            if( o.posX > o.goalPosX)
+            {
+                o.flip = true;
+                aux = o.posX - o.vel * dt;
+                (aux < o.goalPosX) ? o.posX = o.goalPosX : o.posX = aux; 
+            }
+            else
+            {
+                o.flip = false;
+                aux = o.posX + o.vel * dt;
+                (aux > o.goalPosX) ? o.posX = o.goalPosX : o.posX = aux;
+            }
         }
         else
         {
-            o.flip = false;
-            aux = o.posX + o.vel * dt;
-            (aux > o.goalPosX) ? o.posX = o.goalPosX : o.posX = aux;
+            o.frame = idle;
         }
-    }
-    else
-    {
-        o.frame = idle;
     }
 };
 
@@ -182,7 +185,13 @@ function init( name, connection )
         id: null
     };
 
+    var welcome = {
+        subtype: 'info',
+        data: "Welcome to the server!"
+    }
+
     objects.push(user);
+    createMessage( welcome );
 
     sendInitInfoToServer( connection );
 
@@ -212,6 +221,12 @@ function onMouse ( e )
     if(e.type == 'click' && connected)
     {
         o.goalPosX = canvasx;
+        var msgUpdate = {
+            type: 'update',
+            id: o.id,
+            goal: canvasx
+        }
+        connection.send( JSON.stringify( msgUpdate ));
     }
 };
 
@@ -248,5 +263,21 @@ input.addEventListener("keyup", function(event) {
         document.getElementById("add").click();
     }
 });
+
+function createMessage( msgParsed )
+{
+    if( msgParsed.subtype === 'info')
+    {
+        var message = document.createTextNode( msgParsed.data );
+    }
+    else{
+        var message = document.createTextNode( msgParsed.name + ": " + msgParsed.data );
+    }
+
+    var li = document.createElement( "LI" );
+    li.setAttribute("id", "otherMessage")
+    li.appendChild( message );
+    document.getElementById( "message-list" ).appendChild( li );
+}
 
 
