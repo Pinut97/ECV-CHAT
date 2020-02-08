@@ -42,7 +42,6 @@ wsServer.on('request', function(request){
                 {
                     connection.send(JSON.stringify(messages[i]));
                 }
-                
             }
             else if( msg.type === 'msg' )
             {
@@ -65,14 +64,9 @@ wsServer.on('request', function(request){
             }
             else if( msg.type === 'posRequest')
             {
-                console.log("SERVER POSREQUEST JIJI");
                 for(var i = 0; i < users.length; i++)
                 {
-                    if(msg.id === users[i].id)
-                    {
-                        users[i].posX = msg.position;
-                        console.log("New pos = " + users[i].posX);
-                    }                    
+                    clients[i].send( message.utf8Data );
                 }
             }
         }
@@ -91,10 +85,18 @@ wsServer.on('request', function(request){
 
         for( var i = 0; i < clients.length; i++ )
         {
+            console.log( "Index of user: " + users.indexOf( users[i] ) );
             if( users[i].id === index )
             {
-                users.pop( users[i] );
+                console.log( users.length );
+                console.log( users[i] );
+                users.splice( users.indexOf( users[i] ), 1 );
+                break;
             }
+        }
+
+        for( var i = 0; i < clients.length; i++ )
+        {
             clients[i].send( JSON.stringify( logout ));
         }
     });
@@ -137,16 +139,14 @@ function addNewUser( msg, index )
         type: 'posRequest'
     };
 
-    console.log( msg );
-
     users.push( newUser );
     userConnected.push(newUser);
     
     for(var i = 0; i < clients.length - 1; i++)
     {
-        clients[i].send( JSON.stringify( newUser )); //send the information of new user to all other users
-        clients[i].send( JSON.stringify( welcome ));
-        clients[clients.length - 1].send( JSON.stringify(users[i])); //send the information of other users to the new user
+        clients[i].send( JSON.stringify( newUser ));    //send the information of new user to all other users
+        clients[i].send( JSON.stringify( welcome ));    //send message user has connected to all users
+        clients[clients.length - 1].send( JSON.stringify(users[i]));    //send the information of other users to the new user
     }
 
     clients[clients.length - 1].send(JSON.stringify( idMsg ));

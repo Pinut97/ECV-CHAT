@@ -51,17 +51,19 @@ function connect()
                 id: msgParsed.id
             }
             objects.push(user);
-        }
-        else if ( msgParsed.type === 'posRequest')
-        {
-            console.log("Pos Request JIJIJIJ: " + objects[0].posX);
-            var userPosition = {
+
+            var myPosition = {
                 type: 'posRequest',
                 id: objects[0].id,
                 position: objects[0].posX
-            };
+            }
 
-            connection.send(JSON.stringify(userPosition));
+            connection.send( JSON.stringify(myPosition));
+
+        }
+        else if ( msgParsed.type === 'posRequest')
+        {
+            updateUserPosition( msgParsed );
         }
         else if ( msgParsed.type === 'msg' ) //chat message from another user
         {
@@ -87,7 +89,8 @@ function connect()
             {
                 if( objects[i].id === msgParsed.id )
                 {
-                    objects.pop( objects[i] );
+                    objects.splice( objects.indexOf(objects[i]), 1 );
+                    console.log( objects );
                     break;
                 }
             }
@@ -311,14 +314,14 @@ function createMessage( msgParsed )
     document.getElementById( "message-list" ).appendChild( li );
 };
 
-function deleteUser( msgParsed )
+function updateUserPosition( msgParsed )
 {
-    objects.pop( objects.find( msgParsed.id ));
-    
-    var user_disconnected = {
-        type: 'info',
-        data: msgParsed.name + " has disconnected!"
+    for( var i = 0; i < objects.length; i++ )
+    {
+        if( objects[i].id === msgParsed.id )
+        {
+            objects[i].posX === msgParsed.position;
+            break;
+        }
     }
-
-    createMessage( user_disconnected );
 };
