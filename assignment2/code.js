@@ -181,7 +181,7 @@ function draw()
         {
             ctx.lineWidth = 2;
             //ctx.strokeStyle = yellow;
-            ctx.strokeRect(objects[i].posX, objects[i].posY, 32 * 4, 64 * 4 );
+            ctx.strokeRect(objects[i].posX, objects[i].posY, 75, 150 );
         }
         animation(ctx, sprite_list[objects[i].imageIndex] , 32, 64, objects[i].posX, objects[i].posY, objects[i].frame[t % objects[i].frame.length], objects[i].flip);
     }
@@ -438,7 +438,7 @@ mouse = {
 
     checkMouseCollision:function( box )
     {
-        if( mouse.x > box.posX && mouse.x < box.posX + (32 * 4) && mouse.y > box.posY && mouse.y < box.posY + (64 * 4) )
+        if( mouse.x > box.posX && mouse.x < box.posX + (75) && mouse.y > box.posY && mouse.y < box.posY + (150) )
         {
             userToWhisper = box;
             return true;
