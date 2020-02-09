@@ -128,7 +128,8 @@ function addNewUser( msg, index )
         name: msg.name,
         id: index,
         position: msg.position,
-        imageIndex: msg.imageIndex
+        imageIndex: msg.imageIndex,
+        room_id: msg.room_id
     };
 
     var idMsg = {

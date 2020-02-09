@@ -48,8 +48,10 @@ function connect()
                 flip: false,
                 frame: idle,
                 vel: 50,
-                id: msgParsed.id
-            }
+                id: msgParsed.id,
+                room_id: msgParsed.room_id
+            };
+
             objects.push(user);
 
             var myPosition = {
@@ -126,7 +128,8 @@ function sendInitInfoToServer( connection )
         position: objects[0].posX,
         type: 'init',
         imageIndex: objects[0].imageIndex,
-        id: objects[0].id
+        id: objects[0].id,
+        room_id: objects[0].room_id
     };
 
     connection.send(JSON.stringify(msg));
@@ -148,6 +151,7 @@ var idle = [0];
 var walking = [2, 3, 4, 5, 6, 7, 8];
 var sprite_list = ["spritesheets/man1-spritesheet.png", "spritesheets/man2-spritesheet.png", "spritesheets/man3-spritesheet.png", "spritesheets/man4-spritesheet.png",
         "spritesheets/woman1-spritesheet.png", "spritesheets/woman2-spritesheet.png", "spritesheets/woman3-spritesheet.png", "spritesheets/woman4-spritesheet.png"]
+var room_sprites = ["spritesheets/room1.jpg", "spritesheets/room2.png"];
 
 //draw avatars
 function draw()
@@ -155,6 +159,19 @@ function draw()
     var ctx = canvas.getContext('2d');
     ctx.imageSmoothingEnabled = false;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    var background = new Image();
+    if(objects[0].room_id === 0)
+    {
+        console.log("Room: " + room_sprites[0]);
+        background.src = room_sprites[0];
+    }
+    else if (objects[0].room_id === 1)
+    {
+        room_sprites[1];
+    }
+
+    ctx.drawImage(background, 0, 0);
 
     var t = Math.floor(performance.now() * 0.001 * 10);
 
@@ -170,11 +187,11 @@ function animation(ctx, img, w, h, x, y, frame, flip)
     image.src = img;
     if(flip)
     {
-        ctx.drawImage( image, frame * w, 2*h, w, h, x, y, 128, 256 );
+        ctx.drawImage( image, frame * w, 2*h, w, h, x, y, 75, 150 );
     }
     else
     {
-        ctx.drawImage( image, frame * w, 0, w, h, x, y, 128, 256 );
+        ctx.drawImage( image, frame * w, 0, w, h, x, y, 75, 150 );
     }
 }
 
@@ -232,7 +249,8 @@ function init( name, connection )
         flip: false,
         frame: idle,
         vel: 50,
-        id: null
+        id: null,
+        room_id: 0
     };
 
     var welcome = {
