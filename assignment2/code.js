@@ -163,7 +163,6 @@ function draw()
     var background = new Image();
     if(objects[0].room_id === 0)
     {
-        console.log("Room: " + room_sprites[0]);
         background.src = room_sprites[0];
     }
     else if (objects[0].room_id === 1)
@@ -180,7 +179,6 @@ function draw()
         if( userToWhisper && userToWhisper.id === objects[i].id )
         {
             ctx.lineWidth = 2;
-            //ctx.strokeStyle = yellow;
             ctx.strokeRect(objects[i].posX, objects[i].posY, 75, 150 );
         }
         animation(ctx, sprite_list[objects[i].imageIndex] , 32, 64, objects[i].posX, objects[i].posY, objects[i].frame[t % objects[i].frame.length], objects[i].flip);
@@ -367,7 +365,6 @@ function createMessage( msgParsed )
     }
     else if( msgParsed.type === 'systemMsg')
     {
-        console.log(msgParsed.data);
         var message = document.createTextNode( msgParsed.data );
     }
     else{
@@ -417,15 +414,11 @@ mouse = {
         var collision;
         for( users of objects )
         {
-            collision = mouse.checkMouseCollision( users )
-            if( collision )
-            {
-                //userToWhisper = box;
-                console.log( "user to whisper: " + userToWhisper.name );
-            }
+            collision = mouse.checkMouseCollision( users );
         }
         if( connected && canvasx < rect.right && !collision )
         {
+            userToWhisper = null;
             o.goalPosX = canvasx;
             var msgUpdate = {
                 type: 'update',
@@ -438,12 +431,16 @@ mouse = {
 
     checkMouseCollision:function( box )
     {
+        //if collision and not owner user, add the target user
+        console.log( mouse.x + " " + mouse.y );
         if( mouse.x > box.posX && mouse.x < box.posX + (75) && mouse.y > box.posY && mouse.y < box.posY + (150) )
         {
-            userToWhisper = box;
+            if(box.id != objects[0].id)
+            {
+                userToWhisper = box;
+            }
             return true;
         }
-        console.log("NOTHING!")
         return false;
     }
 };
