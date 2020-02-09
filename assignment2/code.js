@@ -41,9 +41,9 @@ function connect()
             var user = {
                 name: msgParsed.name,
                 posX: msgParsed.position,
-                posY: canvas.height * 0.5,
+                posY: canvas.height * 0.53,
                 goalPosX: msgParsed.position,
-                goalPosY: canvas.height * 0.5,
+                goalPosY: canvas.height * 0.53,
                 imageIndex: msgParsed.imageIndex,
                 flip: false,
                 frame: idle,
@@ -70,14 +70,17 @@ function connect()
         else if ( msgParsed.type === 'msg' ) //chat message from another user
         {
             console.log( "message received: " + msgParsed.data);
-            for( var i = 0; i < objects.length; i++ )
+            if(msgParsed.room_id === objects[0].room_id)
             {
-                if( objects[i].id === msgParsed.id )
+                for( var i = 0; i < objects.length; i++ )
                 {
-                    if( Math.abs(objects[0].posX - objects[i].posX) < distance )
+                    if( objects[i].id === msgParsed.id )
                     {
-                        console.log( "enters in distance" );
-                        createMessage( msgParsed );
+                        if( Math.abs(objects[0].posX - objects[i].posX) < distance )
+                        {
+                            console.log( "enters in distance" );
+                            createMessage( msgParsed );
+                        }
                     }
                 }
             }
@@ -97,6 +100,7 @@ function connect()
                 if( objects[i].id === msgParsed.id )
                 {
                     objects[i].goalPosX = msgParsed.goal;
+                    objects[i].room_id = msgParsed.room_id;
                 }
             }
         }
@@ -133,7 +137,7 @@ function sendInitInfoToServer( connection )
     };
 
     connection.send(JSON.stringify(msg));
-}
+};
 
 //---------- LOGIC APP -----------
 
@@ -144,6 +148,7 @@ var distance = 300;
 var userToWhisper;
 
 var messageHistory = [];
+var transitions = [false, false, false, false];
 
 var last = performance.now();
 var objects = [];
@@ -152,6 +157,7 @@ var walking = [2, 3, 4, 5, 6, 7, 8];
 var sprite_list = ["spritesheets/man1-spritesheet.png", "spritesheets/man2-spritesheet.png", "spritesheets/man3-spritesheet.png", "spritesheets/man4-spritesheet.png",
         "spritesheets/woman1-spritesheet.png", "spritesheets/woman2-spritesheet.png", "spritesheets/woman3-spritesheet.png", "spritesheets/woman4-spritesheet.png"]
 var room_sprites = ["spritesheets/room1.jpg", "spritesheets/room2.png"];
+var transition_sprites = ["spritesheets/transition0.png"];
 
 //draw avatars
 function draw()
@@ -165,25 +171,52 @@ function draw()
     {
         console.log("Room: " + room_sprites[0]);
         background.src = room_sprites[0];
+
     }
     else if (objects[0].room_id === 1)
     {
-        room_sprites[1];
+        background.src = room_sprites[1];
     }
 
-    ctx.drawImage(background, 0, 0);
+    ctx.drawImage(background, 20, 0, canvas.width * 0.95, canvas.height * 0.95);
+
 
     var t = Math.floor(performance.now() * 0.001 * 10);
 
     for(var i = 0; i < objects.length; i++)
     {
-        if( userToWhisper && userToWhisper.id === objects[i].id )
+        if(objects[i].room_id === objects[0].room_id)
         {
-            ctx.lineWidth = 2;
-            //ctx.strokeStyle = yellow;
-            ctx.strokeRect(objects[i].posX, objects[i].posY, 75, 150 );
+            if( userToWhisper && userToWhisper.id === objects[i].id )
+            {
+                ctx.lineWidth = 2;
+                //ctx.strokeStyle = yellow;
+                ctx.strokeRect(objects[i].posX, objects[i].posY, 75, 150 );
+            }
+            animation(ctx, sprite_list[objects[i].imageIndex] , 32, 64, objects[i].posX, objects[i].posY, objects[i].frame[t % objects[i].frame.length], objects[i].flip);
+        } 
+    }
+
+    if(objects[0].room_id === 0)
+    {
+        if(transitions[0] === true)
+        {
+            var transition0 = new Image();
+            transition0.src = transition_sprites[0];
+            ctx.fillStyle = 'white';
+            ctx.fillRect(canvas.width * 0.205, canvas.height * 0.44, canvas.width * 0.10, canvas.height * 0.10);
+            ctx.fillStyle = 'black';
+            ctx.drawImage( transition0, canvas.width * 0.155, canvas.height * 0.40, canvas.width * 0.2, canvas.height * 0.2);
         }
-        animation(ctx, sprite_list[objects[i].imageIndex] , 32, 64, objects[i].posX, objects[i].posY, objects[i].frame[t % objects[i].frame.length], objects[i].flip);
+        else if (transitions[1] === true)
+        {
+            var transition1 = new Image();
+            transition0.src = transition_sprites[0];
+            ctx.fillStyle = 'white';
+            ctx.fillRect(canvas.width * 0.05, canvas.height * 0.44, canvas.width * 0.10, canvas.height * 0.10);
+            ctx.fillStyle = 'black';
+            ctx.drawImage( transition0, canvas.width * 0.55, canvas.height * 0.40, canvas.width * 0.2, canvas.height * 0.2);
+        }
     }
 };
 
@@ -199,7 +232,7 @@ function animation(ctx, img, w, h, x, y, frame, flip)
     {
         ctx.drawImage( image, frame * w, 0, w, h, x, y, 75, 150 );
     }
-}
+};
 
 //calculate movement of avatars
 function update( dt )
@@ -231,6 +264,10 @@ function update( dt )
             o.frame = idle;
         }
     }
+
+    //check if the user is close to a door
+    checkTransitions();
+
 };
 
 //init the app with the creation of the user
@@ -248,9 +285,9 @@ function init( name, connection )
     user = {
         name: name,
         posX: canvas.width * 0.5,
-        posY: canvas.height * 0.5,
+        posY: canvas.height * 0.53,
         goalPosX: canvas.width * 0.5,
-        goalPosY: canvas.height * 0.5,
+        goalPosY: canvas.height * 0.53,
         imageIndex: index,
         flip: false,
         frame: idle,
@@ -298,8 +335,9 @@ function sendMsg()
                 name: objects[0].name,
                 type: 'msg',
                 id: objects[0].id,
-                data: text
-            }
+                data: text,
+                room_id: objects[0].room_id
+            };
         
             messageHistory.push( message ); //add message to historic
         
@@ -395,7 +433,7 @@ function updateUserPosition( msgParsed )
 window.onload = function()
 {
     this.addEventListener('mousemove', mouse.move );
-}
+};
 
 //mouse class
 mouse = {
@@ -415,36 +453,91 @@ mouse = {
         var canvasx = e.clientX - rect.left;
         var o = objects[0]; //tenir en compte id del user
         var collision;
-        for( users of objects )
+        if(pressTransition())
         {
-            collision = mouse.checkMouseCollision( users )
-            if( collision )
+
+        }
+        else 
+        {
+            for( users of objects )
             {
-                //userToWhisper = box;
-                console.log( "user to whisper: " + userToWhisper.name );
+                collision = mouse.checkMouseCollision( users )
+                if( collision )
+                {
+                    //userToWhisper = box;
+                    console.log( "user to whisper: " + userToWhisper.name );
+                }
+            }
+            if( connected && canvasx < rect.right && !collision )
+            {
+                userToWhisper = null;
+                o.goalPosX = canvasx;
+                var msgUpdate = {
+                    type: 'update',
+                    id: o.id,
+                    goal: canvasx,
+                    room_id: o.room_id
+                };
+                connection.send( JSON.stringify( msgUpdate ));
             }
         }
-        if( connected && canvasx < rect.right && !collision )
-        {
-            o.goalPosX = canvasx;
-            var msgUpdate = {
-                type: 'update',
-                id: o.id,
-                goal: canvasx
-            }
-            connection.send( JSON.stringify( msgUpdate ));
-        }
+
     },
 
     checkMouseCollision:function( box )
     {
-        if( mouse.x > box.posX && mouse.x < box.posX + (75) && mouse.y > box.posY && mouse.y < box.posY + (150) )
+        if( mouse.x > box.posX && mouse.x < box.posX + (75) && mouse.y > box.posY 
+            && mouse.y < box.posY + (150) && box.room_id === objects[0].room_id)
         {
-            userToWhisper = box;
+            if(box.id != objects[0].id)
+            {
+                userToWhisper = box;
+            }
+            
             return true;
         }
         console.log("NOTHING!")
         return false;
+    }
+
+};
+
+
+function pressTransition()
+{
+    if(transitions[0] === true)
+    {
+        if(mouse.x > canvas.width * 0.205 && mouse.x < canvas.width * 0.305 
+        && mouse.y > canvas.height * 0.44 && mouse.y < canvas.height * 0.54)
+        {
+            transitions[0] = false;
+            objects[0].room_id = 1;
+
+            var message = {
+                type: 'update',
+                id: objects[0].id,
+                room_id: objects[0].room_id
+            };
+            connection.send( JSON.stringify)
+            return true;
+        }
+    }
+    return false;
+}
+
+function checkTransitions()
+{
+    if(objects[0].room_id === 0)
+    {
+        if(objects[0].posX > canvas.width * 0.12 && objects[0].posX < canvas.width * 0.29)
+        {
+            console.log("puerta jiji");
+            transitions[0] = true;
+        }
+        else 
+        {
+            transitions[0] = false;
+        }
     }
 };
 

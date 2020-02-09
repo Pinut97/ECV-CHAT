@@ -77,7 +77,7 @@ div.input{
 
 .chat {
   overflow: auto;
-  height: 550px;
+  height: 100%;
 }
 
 .chat li {
