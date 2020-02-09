@@ -69,6 +69,10 @@ wsServer.on('request', function(request){
                     clients[i].send( message.utf8Data );
                 }
             }
+            else if( msg.type === 'whisper' )
+            {
+                clients[users.indexOf( findUserByIndex( msg.target ) )].send( message.utf8Data );
+            }
         }
     });
 
@@ -88,12 +92,7 @@ wsServer.on('request', function(request){
             console.log( "Index of user: " + users.indexOf( users[i] ) );
             if( users[i].id === index )
             {
-                console.log( users.length );
-                console.log("pre splice: " + users);
-                console.log("pre splice clients: " + clients);
                 users.splice( i, 1 );
-                console.log("post splice: " + users);
-                console.log("post splice: " + clients);
                 break;
             }
         }
@@ -139,10 +138,6 @@ function addNewUser( msg, index )
         type: 'msg',
         subtype: 'info',
         data: msg.name + " has connected!"
-    };
-
-    var posRequest = {
-        type: 'posRequest'
     };
 
     users.push( newUser );

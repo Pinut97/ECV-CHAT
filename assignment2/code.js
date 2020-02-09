@@ -1,9 +1,9 @@
-//import { listenerCount } from "cluster";
 
 //----------- SERVER PART -------------
 
 //get the nickname of the user and connect to the server
 var connection;
+var mouse;
 
 //user clicks connect button
 function connect()
@@ -105,6 +105,10 @@ function connect()
             }
             createMessage( msgParsed );
         }
+        else if ( msgParsed.type === 'target' )
+        {
+
+        }
     };
 };
 
@@ -128,6 +132,7 @@ var canvas = document.getElementById("myCanvas");
 var rect;
 var connected = false;
 var distance = 200;
+var userToWhisper;
 
 var messageHistory = [];
 
@@ -170,6 +175,8 @@ function animation(ctx, img, w, h, x, y, frame, flip)
 //calculate movement of avatars
 function update( dt )
 {
+    document.body.addEventListener('mousemove', mouse.move);
+
     for( var i = 0; i < objects.length; i++ )
     {
         var o = objects[i];
@@ -249,50 +256,60 @@ function loop()
     requestAnimationFrame( loop );  //call loop again
 };
 
-function onMouse ( e )
-{
-    rect = canvas.parentNode.getBoundingClientRect();
-    var canvasx = e.clientX - rect.left;
-    var o = objects[0]; //tenir en compte id del user
-
-    if( e.type == 'click' && connected && canvasx < rect.right )
-    {
-        o.goalPosX = canvasx;
-        var msgUpdate = {
-            type: 'update',
-            id: o.id,
-            goal: canvasx
-        }
-        connection.send( JSON.stringify( msgUpdate ));
-    }
-};
-
-document.body.addEventListener('click', onMouse);
-
 //send message on the chat
 function sendMsg()
 {
-    var text = document.getElementById("message-input").value;
-    if( text )
+    if( !userToWhisper )
     {
-        var message = {
-            name: objects[0].name,
-            type: 'msg',
-            id: objects[0].id,
-            data: text
+        var text = document.getElementById("message-input").value;
+        if( text )
+        {
+            var message = {
+                name: objects[0].name,
+                type: 'msg',
+                id: objects[0].id,
+                data: text
+            }
+        
+            messageHistory.push( message ); //add message to historic
+        
+            var li = document.createElement( "li" );
+            li.textContent = "You: " + text;
+            li.setAttribute("id", "ownMessage");
+            document.getElementById( "message-list" ).appendChild( li );
+        
+            connection.send(JSON.stringify(message));
+        
+            document.getElementById("message-input").value = "";
         }
-    
-        messageHistory.push( message ); //add message to historic
-    
-        var li = document.createElement( "li" );
-        li.textContent = "You: " + text;
-        li.setAttribute("id", "ownMessage");
-        document.getElementById( "message-list" ).appendChild( li );
-    
-        connection.send(JSON.stringify(message));
-    
-        document.getElementById("message-input").value = "";
     }
+    else
+    {
+        var text = document.getElementById("message-input").value;
+        if( text )
+        {
+            var message = {
+                name: objects[0].name,
+                type: 'whisper',
+                id: objects[0].id,
+                target: userToWhisper.id,
+                data: text
+            }
+        
+            messageHistory.push( message ); //add message to historic
+        
+            var li = document.createElement( "li" );
+            li.textContent = "You: " + text;
+            li.setAttribute("id", "ownMessage");
+            document.getElementById( "message-list" ).appendChild( li );
+        
+            connection.send(JSON.stringify(message));
+        
+            document.getElementById("message-input").value = "";
+        }
+        userToWhisper = null;
+    }
+
 };
 
 //code to send messages with the enter button
@@ -313,6 +330,10 @@ function createMessage( msgParsed )
     else if( msgParsed.type === 'logout' )
     {
         var message = document.createTextNode( msgParsed.name + " has disconnected!" );
+    }
+    else if( msgParsed.type === 'whisper' )
+    {
+        var message = document.createTextNode( msgParsed.name + " whispers: " + msgParsed.data );
     }
     else{
         var message = document.createTextNode( msgParsed.name + ": " + msgParsed.data );
@@ -335,3 +356,61 @@ function updateUserPosition( msgParsed )
         }
     }
 };
+
+window.onload = function()
+{
+    this.addEventListener('mousemove', mouse.move );
+}
+
+//mouse class
+mouse = {
+    x: 0, 
+    y: 0,
+
+    move:function( event )
+    {
+        rect = canvas.parentNode.getBoundingClientRect(),
+        mouse.x = event.clientX - rect.left;
+        mouse.y = event.clientY - rect.top;
+    },
+
+    onClick:function( e )
+    {
+        rect = canvas.parentNode.getBoundingClientRect();
+        var canvasx = e.clientX - rect.left;
+        var o = objects[0]; //tenir en compte id del user
+        var collision;
+        for( users of objects )
+        {
+            collision = mouse.checkMouseCollision( users )
+            if( collision )
+            {
+                //userToWhisper = box;
+                console.log( "user to whisper: " + userToWhisper.name );
+            }
+        }
+        if( connected && canvasx < rect.right && !collision )
+        {
+            o.goalPosX = canvasx;
+            var msgUpdate = {
+                type: 'update',
+                id: o.id,
+                goal: canvasx
+            }
+            connection.send( JSON.stringify( msgUpdate ));
+        }
+    },
+
+    checkMouseCollision:function( box )
+    {
+        if( mouse.x > box.posX && mouse.x < box.posX + (32 * 4) && mouse.y > box.posY && mouse.y < box.posY + (64 * 4) )
+        {
+            userToWhisper = box;
+            return true;
+        }
+        console.log("NOTHING!")
+        return false;
+    }
+};
+
+document.body.addEventListener('click', mouse.onClick);
