@@ -46,6 +46,7 @@ wsServer.on('request', function(request){
             else if( msg.type === 'msg' )
             {
                 messages.push(msg);
+                console.log( "msg received" );
 
                 for( var i = 0; i < clients.length; i++ )
                 {
@@ -71,6 +72,7 @@ wsServer.on('request', function(request){
             }
             else if( msg.type === 'whisper' )
             {
+                console.log( "whisper received " );
                 clients[users.indexOf( findUserByIndex( msg.target ) )].send( message.utf8Data );
             }
         }

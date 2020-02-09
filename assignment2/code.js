@@ -67,12 +67,14 @@ function connect()
         }
         else if ( msgParsed.type === 'msg' ) //chat message from another user
         {
+            console.log( "message received: " + msgParsed.data);
             for( var i = 0; i < objects.length; i++ )
             {
                 if( objects[i].id === msgParsed.id )
                 {
                     if( Math.abs(objects[0].posX - objects[i].posX) < distance )
                     {
+                        console.log( "enters in distance" );
                         createMessage( msgParsed );
                     }
                 }
@@ -131,7 +133,7 @@ function sendInitInfoToServer( connection )
 var canvas = document.getElementById("myCanvas");
 var rect;
 var connected = false;
-var distance = 200;
+var distance = 300;
 var userToWhisper;
 
 var messageHistory = [];
@@ -299,7 +301,7 @@ function sendMsg()
             messageHistory.push( message ); //add message to historic
         
             var li = document.createElement( "li" );
-            li.textContent = "You: " + text;
+            li.textContent = "You whispered to " + userToWhisper.name + ": " + text;
             li.setAttribute("id", "ownMessage");
             document.getElementById( "message-list" ).appendChild( li );
         
