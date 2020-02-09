@@ -195,12 +195,15 @@ function draw()
 
     for(var i = 0; i < objects.length; i++)
     {
-        if(objects[i].room_id === objects[0].room_id)
+        if( objects[i].room_id === objects[0].room_id )
         {
+            if( objects[i].room_id === 1 )
+            {
+                objects[i].posY = canvas.height * 0.8;
+            }
             if( userToWhisper && userToWhisper.id === objects[i].id )
             {
                 ctx.lineWidth = 2;
-                //ctx.strokeStyle = yellow;
                 ctx.strokeRect(objects[i].posX, objects[i].posY, 75, 150 );
             }
             animation(ctx, sprite_list[objects[i].imageIndex] , 32, 64, objects[i].posX, objects[i].posY, objects[i].frame[t % objects[i].frame.length], objects[i].flip);
@@ -389,19 +392,9 @@ function sendMsg()
     }
 
 };
-
-//code to send messages with the enter button
-var input = document.getElementById("message-input");
-input.addEventListener("keyup", function(event) {
-    if (event.keyCode === 13) {
-        event.preventDefault();
-        document.getElementById("add").click();
-    }
-});
-
 function createMessage( msgParsed )
 {
-    if( msgParsed.subtype === 'info')
+    if( msgParsed.subtype === 'info' )
     {
         var message = document.createTextNode( msgParsed.data );
     }
@@ -469,10 +462,7 @@ mouse = {
         {
             for( users of objects )
             {
-                collision = mouse.checkMouseCollision( users )
-                if( collision )
-                {
-                }
+                collision = mouse.checkMouseCollision( users );
             }
             if( connected && canvasx < rect.right && !collision )
             {
@@ -486,7 +476,6 @@ mouse = {
                 connection.send( JSON.stringify( msgUpdate ));
             }
         }
-
     },
 
     checkMouseCollision:function( box )

@@ -40,16 +40,16 @@
 }
 
 .chat-header {
-    height: 20%;
+    height: 10%;
 }
 
 .messages {
     padding: 5px;
-    height: 60%;
+    height: 80%;
 }
 
 .next-message {
-    height: 20%;
+    height: 10%;
     justify-content: center;
 }
 
