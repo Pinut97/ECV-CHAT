@@ -137,7 +137,7 @@ function addNewUser( msg, index )
     };
 
     var welcome = {
-        type: 'msg',
+        type: 'systemMsg',
         subtype: 'info',
         data: msg.name + " has connected!"
     };

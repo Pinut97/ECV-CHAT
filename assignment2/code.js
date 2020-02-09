@@ -80,6 +80,10 @@ function connect()
                 }
             }
         }
+        else if (msgParsed.type === 'systemMsg')
+        {
+            createMessage(msgParsed);
+        }
         else if( msgParsed.type === 'id' )   //server returns id from the user (after init)
         {
             objects[0].id = msgParsed.data;
@@ -336,6 +340,11 @@ function createMessage( msgParsed )
     else if( msgParsed.type === 'whisper' )
     {
         var message = document.createTextNode( msgParsed.name + " whispers: " + msgParsed.data );
+    }
+    else if( msgParsed.type === 'systemMsg')
+    {
+        console.log(msgParsed.data);
+        var message = document.createTextNode( msgParsed.data );
     }
     else{
         var message = document.createTextNode( msgParsed.name + ": " + msgParsed.data );
