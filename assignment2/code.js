@@ -100,6 +100,17 @@ function connect()
                 if( objects[i].id === msgParsed.id )
                 {
                     objects[i].goalPosX = msgParsed.goal;
+                }
+            }
+        }
+        else if(msgParsed.type === 'updateRoom')
+        {
+            console.log("update room client")
+            for( var i = 0; i < objects.length; i++ )
+            {
+                if( objects[i].id === msgParsed.id )
+                {
+                    console.log("update de room");
                     objects[i].room_id = msgParsed.room_id;
                 }
             }
@@ -475,8 +486,7 @@ mouse = {
                 var msgUpdate = {
                     type: 'update',
                     id: o.id,
-                    goal: canvasx,
-                    room_id: o.room_id
+                    goal: canvasx
                 };
                 connection.send( JSON.stringify( msgUpdate ));
             }
@@ -492,9 +502,8 @@ mouse = {
             if(box.id != objects[0].id)
             {
                 userToWhisper = box;
+                return true;
             }
-            
-            return true;
         }
         console.log("NOTHING!")
         return false;
@@ -514,11 +523,11 @@ function pressTransition()
             objects[0].room_id = 1;
 
             var message = {
-                type: 'update',
+                type: 'updateRoom',
                 id: objects[0].id,
                 room_id: objects[0].room_id
             };
-            connection.send( JSON.stringify)
+            connection.send( JSON.stringify(message));
             return true;
         }
     }

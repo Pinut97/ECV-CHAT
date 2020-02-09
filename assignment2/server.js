@@ -63,6 +63,14 @@ wsServer.on('request', function(request){
                     clients[i].send( message.utf8Data );
                 }
             }
+            else if ( msg.type === 'updateRoom')
+            {
+                console.log("update room server");
+                for( var i = 0; i < clients.length; i++ )
+                {
+                    clients[i].send( message.utf8Data );
+                }
+            }
             else if( msg.type === 'posRequest')
             {
                 for(var i = 0; i < users.length; i++)
