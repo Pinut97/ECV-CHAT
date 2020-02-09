@@ -107,9 +107,9 @@ function connect()
             }
             createMessage( msgParsed );
         }
-        else if ( msgParsed.type === 'target' )
+        else if ( msgParsed.type === 'whisper' )
         {
-
+            createMessage( msgParsed );
         }
     };
 };
