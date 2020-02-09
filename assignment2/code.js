@@ -177,6 +177,12 @@ function draw()
 
     for(var i = 0; i < objects.length; i++)
     {
+        if( userToWhisper && userToWhisper.id === objects[i].id )
+        {
+            ctx.lineWidth = 2;
+            //ctx.strokeStyle = yellow;
+            ctx.strokeRect(objects[i].posX, objects[i].posY, 32 * 4, 64 * 4 );
+        }
         animation(ctx, sprite_list[objects[i].imageIndex] , 32, 64, objects[i].posX, objects[i].posY, objects[i].frame[t % objects[i].frame.length], objects[i].flip);
     }
 };
