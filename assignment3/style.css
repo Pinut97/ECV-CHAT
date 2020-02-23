@@ -1,0 +1,23 @@
+
+* { margin:0; padding:0; }
+
+html {
+    height: 100%;
+}
+
+body {
+    min-height: 100%;
+}
+
+#file{
+    background-color: darkslategray;
+    color: white;
+    text-align: center;
+    padding: 5px;
+}
+
+#planner{
+    background-color: rgb(226, 226, 226);
+    height: 850px;
+    margin: 10px;
+}
