@@ -43,13 +43,13 @@ function computeDt()
 
 function update( dt )
 {
-    this.addEventListener( 'mousemove', mouse.move );
-    this.addEventListener( 'mousedown', mouse.mousedown );
-    //this.addEventListener( 'mouseup', mouse.mouseup );
-
     //resizeWindow();   //elimina el que es dibuixa en el canvas ¿?
     //document.body.addEventListener('mousedown', mouse.move );
 };
+
+this.addEventListener( 'mousemove', function( e ){ mouse.move( e )} );
+this.addEventListener( 'mousedown', function( e ){ mouse.mousedown( e )} );
+this.addEventListener( 'mouseup', function( e ){ mouse.mouseup( e )} );
 
 //change canvas size when resizing window
 function resizeWindow()
