@@ -6,6 +6,8 @@ let dt = 0;
 
 let gridWidth = 10;
 
+let selectedTool;
+
 function init()
 {
     canvas = document.querySelector( "canvas" );
@@ -77,8 +79,14 @@ function drawWall( xo, yo, xf, yf)
 
 function draw()
 {
-    context.clearRect( 0, 0, canvas.height, canvas.width );
+    clear();
     drawSimpleBasePlane();
+};
+
+function clear()
+{
+    context.fillStyle = "white";
+    context.clearRect( 0, 0, canvas.width, canvas.height );
 };
 
 //draw background grid
@@ -109,12 +117,10 @@ function drawGrid( size )
 
 function drawLine()
 {
-    if( mouse.dragging )
-    {
-        context.moveTo( mouse.memory.x, mouse.memory.y );
-        context.lineTo(  mouse.x, mouse.y );
-        context.stroke();
-    }
+    context.strokeStyle = "black";
+    context.moveTo( mouse.memory.x, mouse.memory.y );
+    context.lineTo(  mouse.x, mouse.y );
+    context.stroke();
 };
 
 //mouse class
@@ -127,7 +133,6 @@ class Mouse {
         this.difference = { x: 0, y: 0 };
         this.inverse = { x: 0, y: 0 };
         this.dragging = false;
-
     }
 
     move( event )
@@ -143,6 +148,8 @@ class Mouse {
 
             if( this.current.x < this.memory.x ) this.inverse.x = this.current.x;
             if( this.current.y < this.memory.y ) this.inverse.y = this.current.y;
+
+            drawLine();
         }
     }
 

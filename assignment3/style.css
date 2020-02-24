@@ -21,3 +21,11 @@ body {
     height: 850px;
     margin: 10px;
 }
+
+#toolSelector{
+    margin: 5px;
+}
+
+#btn{
+    border-radius: 8px;
+}
