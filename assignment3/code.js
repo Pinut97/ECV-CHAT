@@ -7,20 +7,19 @@ let dt = 0;
 let gridWidth = 10;
 
 let selectedTool;
+canvas = document.querySelector( "canvas" );
+context = canvas.getContext( "2d" );
+
+let wallsPosition = [];
 
 function init()
 {
-    canvas = document.querySelector( "canvas" );
-    context = canvas.getContext( "2d" );
-
     canvas.height = canvas.parentNode.getBoundingClientRect().height;
     canvas.width = canvas.parentNode.getBoundingClientRect().width;
 
     mouse = new Mouse();
 
     loop();
-    drawWall( 30, 330, 330, 330 );
-    drawGrid( gridWidth );
 
 };
 
@@ -49,9 +48,11 @@ function update( dt )
     //document.body.addEventListener('mousedown', mouse.move );
 };
 
-this.addEventListener( 'mousemove', function( e ){ mouse.move( e )} );
-this.addEventListener( 'mousedown', function( e ){ mouse.mousedown( e )} );
-this.addEventListener( 'mouseup', function( e ){ mouse.mouseup( e )} );
+document.getElementById("canvas").addEventListener( 'mousemove', function( e ){ mouse.move( e )} );
+document.getElementById("canvas").addEventListener( 'mousedown', function( e ){ mouse.mousedown( e )} );
+document.getElementById("canvas").addEventListener( 'mouseup', function( e ){ mouse.mouseup( e )} );
+document.getElementById("lineBtn").addEventListener( 'click', function(){ selectedTool = "line";});
+document.getElementById("eraseBtn").addEventListener( 'click', function(){ selectedTool = "erase";});
 
 //change canvas size when resizing window
 function resizeWindow()
@@ -60,17 +61,9 @@ function resizeWindow()
     canvas.width = canvas.parentNode.getBoundingClientRect().width;
 };
 
-function drawSimpleBasePlane()
-{
-    drawWall( 30, 30, 330, 30 );
-    drawWall( 30, 30, 30, 330 );
-    drawWall( 330, 30, 330, 330 );
-    drawWall( 30, 330, 330, 330 );
-};
-
 function drawWall( xo, yo, xf, yf)
 {
-    context.lineWidth = 1;
+    context.lineWidth = 4;
     context.style = "black";
     context.moveTo( xo, yo );
     context.lineTo( xf, yf );
@@ -80,7 +73,10 @@ function drawWall( xo, yo, xf, yf)
 function draw()
 {
     clear();
-    drawSimpleBasePlane();
+    for( var i = 0; i < wallsPosition.length; i++ )
+    {
+        drawLine( wallsPosition[i].xo, wallsPosition[i].yo, wallsPosition[i].xf, wallsPosition[i].yf );
+    }
 };
 
 function clear()
@@ -130,58 +126,51 @@ class Mouse {
     {
         this.current = { x: 0, y: 0 };
         this.memory  = { x: 0, y: 0 };
-        this.difference = { x: 0, y: 0 };
-        this.inverse = { x: 0, y: 0 };
-        this.dragging = false;
+        this.pressed = false;
     }
 
     move( event )
     {
-        //rect = canvas.parentNode.getBoundingClientRect(),
-        mouse.x = event.pageX; //event.clientX - rect.left;
-        mouse.y = event.pageY; //event.clientY - rect.top;
-
-        if( this.dragging )
-        {
-            this.difference.x = this.current.x - this.memory.x;
-            this.difference.y = this.current.y - this.memory.y;
-
-            if( this.current.x < this.memory.x ) this.inverse.x = this.current.x;
-            if( this.current.y < this.memory.y ) this.inverse.y = this.current.y;
-
-            drawLine();
-        }
+        var rect = canvas.getBoundingClientRect();
+        mouse.x = event.clientX - rect.left;
+        mouse.y = event.clientY - rect.top;
     }
 
     mousedown( e )
     {
         if( e.button === 0 )
         {
-            if( this.dragging == false )
-            {
-                this.dragging = true;
-
-                //memorize mouse click location
-                this.memory.x = this.current.x;
-                this.memory.y = this.current.y;
-
-                //reset inverse coordinates
-                this.inverse.x = this.memory.x;
-                this.inverse.y = this.memory.y;
-            }
+            this.pressed = "true";
         }
-        console.log( mouse.x, mouse.y );
     }
 
     mouseup( e )
     {
-        //mouse released
-        this.dragging = false;
-        this.memory.x = 0;
-        this.memory.y = 0;
-        this.difference.x = 0;
-        this.difference.y = 0;
-        this.inverse.x = 0;
-        this.inverse.y = 0;
+        if( e.button === 0 )
+        {
+            if( selectedTool === "line" && this.pressed )
+            {
+
+                if( this.memory.x === 0 && this.memory.y === 0 )
+                {
+                    this.memory.x = mouse.x;
+                    this.memory.y = mouse.y;
+                }
+                else
+                {
+                    drawLine( this.memory.x, this.memory.y, this.x, this.y );
+                    let wallPosition = {
+                        xo: this.memory.x,
+                        yo: this.memory.y,
+                        xf: this.memory.x,
+                        yf: this.memory.y
+                    }
+                    wallsPosition.push( wallPosition );
+                    this.memory.x = this.x;
+                    this.memory.y = this.y;
+                }
+            }
+            this.pressed = "false";
+        }
     }
 };

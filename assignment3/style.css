@@ -23,9 +23,31 @@ body {
 }
 
 #toolSelector{
-    margin: 5px;
+    background-color: lightblue;
+    margin: 0px;
+    height: 50px;
+    text-align: center;
 }
 
-#btn{
-    border-radius: 8px;
+button.btn{
+    display: inline-block;
+    margin: 0.5em 0.1em 0.1em 0;
+    padding: 0.2em 1.45em;
+    border: 0.15em solid #CCCCCC;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', 'Roboto', sans-serif;
+    font-weight: 400;
+    text-decoration: none;
+    text-align: center;
+    position: relative;
+    transition: all 0.2s;
+    color: black;
+    background-color: #CCCCCC;
+}
+button.btn:hover{
+    border-color: #7a7a7a;
+    cursor: pointer;
+}
+button.btn:active{
+    background-color: #999999;
 }
