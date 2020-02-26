@@ -1,3 +1,6 @@
+//import * as d from 'point-to-line-2s.js';
+
+//d.distToSegment([5, 5],[0, 2],[6, 2]);
 
 let canvas, context, mouse;
 
@@ -6,7 +9,7 @@ let dt = 0;
 
 let gridWidth = 10;
 
-let selectedTool;
+let selectedTool = null;
 canvas = document.querySelector( "canvas" );
 context = canvas.getContext( "2d" );
 
@@ -51,8 +54,29 @@ function update( dt )
 document.getElementById("canvas").addEventListener( 'mousemove', function( e ){ mouse.move( e )} );
 document.getElementById("canvas").addEventListener( 'mousedown', function( e ){ mouse.mousedown( e )} );
 document.getElementById("canvas").addEventListener( 'mouseup', function( e ){ mouse.mouseup( e )} );
-document.getElementById("lineBtn").addEventListener( 'click', function(){ selectedTool = "line";});
-document.getElementById("eraseBtn").addEventListener( 'click', function(){ selectedTool = "erase";});
+document.getElementById("lineBtn").addEventListener( 'click', function(){
+    if(selectedTool != "line"){
+        selectedTool = "line";
+        this.style.border = "solid #0000FF";
+    } 
+    else {
+        selectedTool = null;
+        mouse.memory.x = 0;
+        mouse.memory.y = 0;
+        this.style.border = "none";
+    }
+});
+
+document.getElementById("eraseBtn").addEventListener( 'click', function(){ 
+    if(selectedTOol != "erase"){
+        selectedTool = "erase";
+        this.style.border = "solid #0000FF";
+    }
+    else {
+        selectedTool = null;
+        this.style.border = "none";
+    }
+});
 
 //change canvas size when resizing window
 function resizeWindow()
@@ -74,6 +98,7 @@ function draw()
 {
     clear();
 
+    //drawGrid(60);
     for( var i = 0; i < wallsPosition.length; i++ )
     {
         drawLine( wallsPosition[i].xo, wallsPosition[i].yo, wallsPosition[i].xf, wallsPosition[i].yf );
@@ -115,6 +140,7 @@ function drawGrid( size )
 function drawLine (xo, yo, xf, yf )
 {
     context.strokeStyle = "black";
+    context.lineWidth = 5;
     context.moveTo( xo, yo );
     context.lineTo(  xf, yf );
     context.stroke();
@@ -170,6 +196,15 @@ class Mouse {
                     this.memory.y = this.y;
                 }
             }
+            /*
+            else if(selectedTool === "erase")
+            {
+                if(this.pressed)
+                {
+                    console.log("jiji no funciona el import");
+                }
+            }
+            */
             this.pressed = "false";
         }
     }
