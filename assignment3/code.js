@@ -148,7 +148,7 @@ class Mouse {
     {
         if( e.button === 0 )
         {
-            if( selectedTool === "line" && this.pressed )
+            if( selectedTool === "line" )
             {
 
                 if( this.memory.x === 0 && this.memory.y === 0 )
@@ -156,18 +156,19 @@ class Mouse {
                     this.memory.x = mouse.x;
                     this.memory.y = mouse.y;
                 }
-                else
+                else if ( this.pressed )
                 {
                     drawLine( this.memory.x, this.memory.y, this.x, this.y );
-                    let wallPosition = {
+                    let linePosition = {
                         xo: this.memory.x,
                         yo: this.memory.y,
                         xf: this.memory.x,
                         yf: this.memory.y
                     }
-                    wallsPosition.push( wallPosition );
+                    wallsPosition.push( linePosition );
                     this.memory.x = this.x;
                     this.memory.y = this.y;
+
                 }
             }
             this.pressed = "false";
