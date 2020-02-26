@@ -1,6 +1,3 @@
-//import * as d from 'point-to-line-2s.js';
-
-//d.distToSegment([5, 5],[0, 2],[6, 2]);
 
 let canvas, context, mouse;
 let context3D, renderer, camera;
@@ -34,13 +31,25 @@ function init()
     camera.lookAt( [0, 100, 100], [0,0,0], [0,1,0] );
 
     var floor = new RD.SceneNode({
-        positoin: [0,0,0],
-        scaling: 100,
-        color: [0.5, 0.5, 1, 1],
+        position: [0,0,0],
+        scale: [100, 0, 50],
+        rotate: [0, 0, 50],
+        color: [1, 1, 1, 1],
         mesh: "planeXZ",
+        texture: "floor.png",
+        tiling: 4,
         shader: "phong_texture"
     });
     scene.root.addChild( floor );
+
+    var wall = new RD.SceneNode({
+        position: [-50,0,0],
+        scaling: 30,
+        color: [1, 0.5, 1, 1],
+        mesh: "plane",
+        shader: "phong_texture"
+    });
+    scene.root.addChild( wall );
 
     renderer.render( scene, camera );
     loop();
@@ -80,6 +89,7 @@ function show3d()
 {
     canvas.style.display = 'none';
     document.body.appendChild( renderer.canvas );
+    console.log( "JIJIJI" );
     renderer.render( scene, camera );
 }
 

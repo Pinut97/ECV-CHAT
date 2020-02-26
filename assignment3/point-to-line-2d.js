@@ -13,7 +13,6 @@ function dist2 (v, w) {
 // v - start point of segment
 // w - end point of segment
 function distToSegmentSquared (p, v, w) {
-	console.log("JIJIJIJI");
   var l2 = dist2(v, w);
   if (l2 === 0) return dist2(p, v);
   var t = ((p[0] - v[0]) * (w[0] - v[0]) + (p[1] - v[1]) * (w[1] - v[1])) / l2;
@@ -28,6 +27,5 @@ function distToSegment (p, v, w) {
   return Math.sqrt(distToSegmentSquared(p, v, w));
 }
 
-export {distToSegment};
 //module.exports = distToSegment;
 //module.exports.squared = distToSegmentSquared;
