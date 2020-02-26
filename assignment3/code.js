@@ -17,10 +17,26 @@ function init()
     canvas.height = canvas.parentNode.getBoundingClientRect().height;
     canvas.width = canvas.parentNode.getBoundingClientRect().width;
 
+    var context3D = GL.create({width: canvas.width, height: canvas.height});
+    var renderer = new RD.Renderer( renderer.canvas );
+    renderer.loadShaders("shaders.txt");
+
+    var camera = new RD.Camera();
+    camera.perspective( 60, gl.canvas.width / gl.canvas.height, 1, 1000 );
+    camera.lookAt( [0, 100, 100], [0,0,0], [0,1,0] );
+
+    var floor = new RD.SceneNode({
+        positoin: [0,0,0],
+        scaling: 100,
+        color: [1, 1, 1, 1],
+        mesh: "planeXZ",
+        shader: "phong_texture"
+    });
+    scene.root.addChild( floor );
+
     mouse = new Mouse();
 
     loop();
-
 };
 
 window.addEventListener( 'load', init, false );
@@ -53,6 +69,12 @@ document.getElementById("canvas").addEventListener( 'mousedown', function( e ){ 
 document.getElementById("canvas").addEventListener( 'mouseup', function( e ){ mouse.mouseup( e )} );
 document.getElementById("lineBtn").addEventListener( 'click', function(){ selectedTool = "line";});
 document.getElementById("eraseBtn").addEventListener( 'click', function(){ selectedTool = "erase";});
+document.getElementById("3dBtn").addEventListener( 'click', show3d );
+
+function show3d()
+{
+    renderer.render( scene, camera );
+}
 
 //change canvas size when resizing window
 function resizeWindow()
