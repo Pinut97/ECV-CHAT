@@ -73,6 +73,7 @@ function drawWall( xo, yo, xf, yf)
 function draw()
 {
     clear();
+
     for( var i = 0; i < wallsPosition.length; i++ )
     {
         drawLine( wallsPosition[i].xo, wallsPosition[i].yo, wallsPosition[i].xf, wallsPosition[i].yf );
@@ -111,11 +112,11 @@ function drawGrid( size )
     }
 };
 
-function drawLine()
+function drawLine (xo, yo, xf, yf )
 {
     context.strokeStyle = "black";
-    context.moveTo( mouse.memory.x, mouse.memory.y );
-    context.lineTo(  mouse.x, mouse.y );
+    context.moveTo( xo, yo );
+    context.lineTo(  xf, yf );
     context.stroke();
 };
 
@@ -150,7 +151,6 @@ class Mouse {
         {
             if( selectedTool === "line" )
             {
-
                 if( this.memory.x === 0 && this.memory.y === 0 )
                 {
                     this.memory.x = mouse.x;
@@ -168,7 +168,6 @@ class Mouse {
                     wallsPosition.push( linePosition );
                     this.memory.x = this.x;
                     this.memory.y = this.y;
-
                 }
             }
             this.pressed = "false";
