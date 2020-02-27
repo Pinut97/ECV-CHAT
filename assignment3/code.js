@@ -33,13 +33,13 @@ function init()
     var floor = new RD.SceneNode({
         position: [0,0,0],
         scale: [100, 0, 50],
-        rotate: [0, 0, 50],
         color: [1, 1, 1, 1],
         mesh: "planeXZ",
         texture: "floor.png",
         tiling: 4,
         shader: "phong_texture"
     });
+    floor.rotate(30, RD.UP);
     scene.root.addChild( floor );
 
     var wall = new RD.SceneNode({
@@ -185,6 +185,60 @@ function drawLine (xo, yo, xf, yf )
     context.stroke();
 };
 
+function createWall()
+{
+    var aux = wallsPosition[wallsPosition.length];
+    //vector between the two points
+    var vector = {
+        x: aux.xf - aux.xo,
+        y: aux.yf - aux.yo
+    }
+    //save the position where wall is gonna create
+    var middlePoint = {
+        x: aux.xo + ( vector.x * 0.5 ), 
+        y: aux.yo + ( vector.y * 0.5 )
+    }
+
+    
+
+    var normalized = normalize( vector );
+    var auxiliarVector = { x: 1, y: 0}
+    
+    var dotProduct = dot( normalized, auxiliarVector );
+    var angle = Math.acos( dotProduct );
+
+    var wall = new RD.SceneNode({
+        position: middlePoint,
+        scale: [vectorLength( vector ), 0, 30],
+        color: [1, 0.5, 1, 1],
+        mesh: "plane",
+        shader: "phong_texture"
+    });
+    var rad = (angle * Math.PI) / 180;
+    wall.rotate( rad, RD.UP );
+    scene.root.addChild( wall );
+};
+
+function dot( v1, v2 )
+{
+    return v1.x * v2.x + v1.y * v2.y;
+};
+
+function vectorLength( v )
+{
+    return Math.sqrt( Math.pow( v.x, 2 ) + Math.pow( v.y, 2 ));
+};
+
+function normalize( v )
+{
+    var aux = {
+        x: v.x / vectorLength( v ),
+        y: v.y / vectorLength( v )
+    }
+
+    return aux;
+};
+
 //mouse class
 class Mouse {
 
@@ -231,19 +285,11 @@ class Mouse {
                         yf: this.memory.y
                     }
                     wallsPosition.push( linePosition );
+                    createWall();
                     this.memory.x = this.x;
                     this.memory.y = this.y;
                 }
             }
-            /*
-            else if(selectedTool === "erase")
-            {
-                if(this.pressed)
-                {
-                    console.log("jiji no funciona el import");
-                }
-            }
-            */
             this.pressed = "false";
         }
     }
