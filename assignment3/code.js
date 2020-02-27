@@ -1,6 +1,6 @@
 
 let canvas, context, mouse;
-let context3D, renderer, camera;
+let context3D, renderer, camera, bg_color = [0, 0, 0, 1];
 
 let last = performance.now();
 let dt = 0;
@@ -32,14 +32,18 @@ function init()
 
     var floor = new RD.SceneNode({
         position: [0,0,0],
-        scale: [100, 0, 50],
+        scale: 100,
         color: [1, 1, 1, 1],
         mesh: "planeXZ",
         texture: "floor.png",
         tiling: 4,
         shader: "phong_texture"
     });
-    floor.rotate(30, RD.UP);
+
+    floor.update = function( dt ){
+        this.rotate( dt * 0.1, RD.UP );
+    }
+
     scene.root.addChild( floor );
 
     var wall = new RD.SceneNode({
@@ -49,22 +53,63 @@ function init()
         mesh: "plane",
         shader: "phong_texture"
     });
-    scene.root.addChild( wall );
+    //scene.root.addChild( wall );
+    
+    context3D.onmousemove = function(e)
+	{
+		if(e.dragging)
+		{
+            //orbit camera around
+            console.log( "dragging" );
+			camera.orbit( e.deltax * -0.1, RD.UP );
+			camera.position = vec3.scaleAndAdd( camera.position, camera.position, RD.UP, e.deltay );
+		}
+    }
 
-    renderer.render( scene, camera );
-    loop();
+    
+    context3D.onupdate = function( dt )
+    {
+        computeDt();
+        scene.update(dt);
+    }
+
+    context3D.ondraw = function()
+    {
+        renderer.clear( bg_color );
+        renderer.render( scene, camera );
+    }
+
+    context3D.captureMouse( true );
+    context3D.onmousewheel = function(e)
+	{
+		//move camera forward
+		camera.position = vec3.scale( camera.position, camera.position, e.wheel < 0 ? 1.1 : 0.9 );
+    }
+    context3D.onmousemove = function(e)
+    {
+        if(e.dragging)
+        {
+            camera.orbit( e.deltax * -0.01, RD.UP );
+            camera.orbit( e.deltay * 0.01, RD.LEFT);
+        }
+    }
+
+    //context3D.captureKeyboard( true );
+    context3D.onkeydown = function( e )
+    {
+        if( e.key === 87 )
+        {
+            console.log( "w button" );
+            camera.position = vec3.scale( camera.position, camera.position, camera.position + 10 );
+        }
+    }
+
+    context3D.animate();
+
 };
 
 window.addEventListener( 'load', init, false );
 
-function loop()
-{
-    draw();
-    computeDt();
-    update( dt );
-
-    window.requestAnimationFrame( loop );
-};
 
 //compute elapsed time between frames as dt
 function computeDt()
@@ -72,12 +117,6 @@ function computeDt()
     var now = performance.now();
     dt = (now - last)/1000;
     last = now;
-};
-
-function update( dt )
-{
-    //resizeWindow();   //elimina el que es dibuixa en el canvas ¿?
-    //document.body.addEventListener('mousedown', mouse.move );
 };
 
 document.getElementById("canvas").addEventListener( 'mousemove', function( e ){ mouse.move( e )} );
@@ -89,7 +128,6 @@ function show3d()
 {
     canvas.style.display = 'none';
     document.body.appendChild( renderer.canvas );
-    console.log( "JIJIJI" );
     renderer.render( scene, camera );
 }
 
@@ -142,6 +180,7 @@ function draw()
     {
         drawLine( wallsPosition[i].xo, wallsPosition[i].yo, wallsPosition[i].xf, wallsPosition[i].yf );
     }
+
 };
 
 function clear()
@@ -187,7 +226,7 @@ function drawLine (xo, yo, xf, yf )
 
 function createWall()
 {
-    var aux = wallsPosition[wallsPosition.length];
+    var aux = wallsPosition[wallsPosition.length - 1];
     //vector between the two points
     var vector = {
         x: aux.xf - aux.xo,
@@ -199,23 +238,33 @@ function createWall()
         y: aux.yo + ( vector.y * 0.5 )
     }
 
-    
-
     var normalized = normalize( vector );
     var auxiliarVector = { x: 1, y: 0}
     
     var dotProduct = dot( normalized, auxiliarVector );
     var angle = Math.acos( dotProduct );
 
+    var scaleX = Math.trunc(vectorLength(vector))
+
     var wall = new RD.SceneNode({
-        position: middlePoint,
-        scale: [vectorLength( vector ), 0, 30],
+        position: [-50, 10, 10],//middlePoint,
+        //scale: [10, 0, 40],
+        scaling: 30,
         color: [1, 0.5, 1, 1],
         mesh: "plane",
         shader: "phong_texture"
     });
+/*
+    var wall = new RD.SceneNode({
+        position: [-50,10,10],
+        scaling: 30,
+        color: [1, 0.5, 1, 1],
+        mesh: "plane",
+        shader: "phong_texture"
+    });
+*/
     var rad = (angle * Math.PI) / 180;
-    wall.rotate( rad, RD.UP );
+    wall.rotate( rad, RD.UP, false );
     scene.root.addChild( wall );
 };
 
@@ -279,8 +328,8 @@ class Mouse {
                 {
                     drawLine( this.memory.x, this.memory.y, this.x, this.y );
                     let linePosition = {
-                        xo: this.memory.x,
-                        yo: this.memory.y,
+                        xo: this.x,
+                        yo: this.y,
                         xf: this.memory.x,
                         yf: this.memory.y
                     }
