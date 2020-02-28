@@ -180,7 +180,6 @@ function draw()
     {
         drawLine( wallsPosition[i].xo, wallsPosition[i].yo, wallsPosition[i].xf, wallsPosition[i].yf );
     }
-
 };
 
 function clear()
@@ -242,7 +241,7 @@ function createWall()
     var auxiliarVector = { x: 1, y: 0}
     
     var dotProduct = dot( normalized, auxiliarVector );
-    var angle = Math.acos( dotProduct );
+    var angleInRads = Math.acos( dotProduct );
 
     var scaleX = Math.trunc(vectorLength(vector))
 
@@ -263,8 +262,8 @@ function createWall()
         shader: "phong_texture"
     });
 */
-    var rad = (angle * Math.PI) / 180;
-    wall.rotate( rad, RD.UP, false );
+    var angleInDegrees = (angleInRads * 180) / Math.PI;
+    wall.rotate( angleInRads, RD.UP, false );
     scene.root.addChild( wall );
 };
 
