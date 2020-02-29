@@ -25,6 +25,7 @@ function init()
     renderer = new RD.Renderer( context3D );
     renderer.loadShaders("shaders.txt");
     document.body.appendChild( renderer.canvas );
+    renderer.canvas.style.display = 'none;'
 
     camera = new RD.Camera();
     camera.perspective( 60, gl.canvas.width / gl.canvas.height, 1, 10000 );
@@ -131,9 +132,21 @@ document.getElementById("3dBtn").addEventListener( 'click', show3d );
 
 function show3d()
 {
-    canvas.style.display = 'none';
-    document.body.appendChild( renderer.canvas );
-    renderer.render( scene, camera );
+    var planner = document.getElementById( 'planner' );
+    if( selectedTool !== '3D' )
+    {
+        this.style.border = "solid #0000FF";
+        selectedTool = '3D';
+        planner.style.display = 'none';
+        renderer.canvas.style.display = 'block';
+        //document.body.appendChild( renderer.canvas );
+    }
+    else
+    {
+        this.style.border = 'none';
+        renderer.canvas.style.display = 'none';
+        planner.style.display = 'block';
+    }
 }
 
 document.getElementById("lineBtn").addEventListener( 'click', function(){
@@ -188,24 +201,6 @@ function drawWall( xo, yo, xf, yf)
     context.moveTo( xo, yo );
     context.lineTo( xf, yf );
     context.stroke();
-};
-
-function draw()
-{
-    clear();
-
-    //drawGrid(60);
-    for( var i = 0; i < wallsPosition.length; i++ )
-    {
-        drawLine( wallsPosition[i].xo, wallsPosition[i].yo, wallsPosition[i].xf, wallsPosition[i].yf );
-    }
-
-};
-
-function clear()
-{
-    context.fillStyle = "white";
-    context.clearRect( 0, 0, canvas.width, canvas.height );
 };
 
 //draw background grid
@@ -272,7 +267,6 @@ function createWall()
         texture: "none",
         shader: "phong_texture"
     });
-//    wall.position.x = wall.position.x - canvas.width;
 
     wall.rotate( angleInRad, RD.UP, false );
     scene.root.addChild( wall );
@@ -283,23 +277,26 @@ function create3DCube( target )
     var cube = new RD.SceneNode( {
         position: [target[0], 24, target[2]],
         scale: [100, 50, 100],
-        color: [0.5, 1, 0.3, 1],
+        color: [0.9, 0.9, 0.7, 1],
         mesh: "cube",
-        shader: "phong_texture"
+        shader: "phong"
     });
     scene.root.addChild( cube );
 };
 
 function createCube( x, y )
 {
-    context.stroke = "black";
+    context.strokeStyle = "black";
     context.lineWidth = 5;
-    context.moveTo( x, y );
-    context.lineTo( x + 100, y );
-    context.lineTo( x + 100, y + 100 );
-    context.lineTo( x, y + 100 );
-    context.lineTo( x, y );
-    //context.stroke();
+    context.moveTo( x - 50, y - 50 );
+    context.lineTo( x + 50, y - 50);
+    context.lineTo( x + 50, y + 50 );
+    context.lineTo( x - 50, y + 50 );
+    context.lineTo( x - 50, y - 50 );
+    context.stroke();
+
+    var target = [x - canvas.width * 0.5, 0, y - canvas.height * 0.5];
+    create3DCube( target );
 }
 
 function dot( v1, v2 )
