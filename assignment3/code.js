@@ -2,6 +2,10 @@
 let canvas, context, mouse;
 let context3D, renderer, camera, bg_color = [0, 0, 0, 1];
 
+let lineBtn = document.getElementById('lineBtn');
+let eraseBtn = document.getElementById('eraseBtn');
+let cubeBtn = document.getElementById('cubeBtn');
+
 let last = performance.now();
 let dt = 0;
 
@@ -12,6 +16,8 @@ canvas = document.querySelector( "canvas" );
 context = canvas.getContext( "2d" );
 
 let wallsPosition = [];
+
+let objects = [];
 
 function init()
 {
@@ -153,6 +159,8 @@ document.getElementById("lineBtn").addEventListener( 'click', function(){
     if(selectedTool != "line"){
         selectedTool = "line";
         this.style.border = "solid #0000FF";
+        eraseBtn.style.border = "none";
+        cubeBtn.style.border = "none";
     } 
     else {
         selectedTool = null;
@@ -167,6 +175,8 @@ document.getElementById("eraseBtn").addEventListener( 'click', function(){
     if( selectedTool != "erase" ){
         selectedTool = "erase";
         this.style.border = "solid #0000FF";
+        lineBtn.style.border = "none";
+        cubeBtn.style.border = "none";
     }
     else {
         selectedTool = null;
@@ -180,6 +190,8 @@ document.getElementById("cubeBtn").addEventListener( 'click', function(){
     {
         selectedTool = 'cube';
         this.style.border = "solid #0000FF";
+        lineBtn.style.border = "none";
+        eraseBtn.style.border = "none";
     }
     else{
         selectedTool = null;
