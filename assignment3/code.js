@@ -163,7 +163,7 @@ function show3d()
         planner.style.display = 'block';
         mode = '2D';
     }
-}
+};
 
 document.getElementById("lineBtn").addEventListener( 'click', function(){
     if(selectedTool != "line"){
@@ -310,6 +310,14 @@ function createWall()
         texture: "none",
         shader: "phong_texture"
     });
+
+    var wall_object = {
+        type: "wall",
+        id: wall.id,
+        position: wall.position
+    };
+
+    objects.push(wall_object);
     objectID++;
     wall.rotate( angleInRad, RD.UP, false );
     scene.root.addChild( wall );
@@ -326,6 +334,14 @@ function create3DCube( target )
         mesh: "cube",
         shader: "phong"
     });
+
+    var cube_object = {
+        type: "cube",
+        id: cube.id,
+        position: cube.position
+    };
+
+    objects.push(cube_object);
     objectID++;
     scene.root.addChild( cube );
 
@@ -348,19 +364,19 @@ function createCube( x, y )
 
 function selectObject( target )
 {
-    for( var i = 1; i < scene._nodes.length; i ++ )
+    for( var i = 0; i < objects.length; i ++ )
     {
-        if( scene._nodes[i].type === 'cube' )
+        if( objects[i].type === 'cube' )
         {
-            var dist = vec3.distance( scene._nodes[i].position, target );
+            var dist = vec3.distance( objects[i].position, target );
             console.log( dist );
-            if ( 50 < vec3.distance( scene._nodes[i].position, target ))
+            if ( 50 < vec3.distance( objects[i].position, target ))
             {
                 console.log( "selected" );
             }
         }
     }
-}
+};
 
 function dot( v1, v2 )
 {
