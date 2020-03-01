@@ -8,6 +8,7 @@ let dt = 0;
 let gridWidth = 10;
 
 let selectedTool = null;
+let mode = '2D';
 canvas = document.querySelector( "canvas" );
 context = canvas.getContext( "2d" );
 
@@ -108,7 +109,6 @@ function init()
                 }
             }
         }
-        console.log( target );
     }
     //call for 3d loop
     context3D.animate();
@@ -133,10 +133,10 @@ document.getElementById("3dBtn").addEventListener( 'click', show3d );
 function show3d()
 {
     var planner = document.getElementById( 'planner' );
-    if( selectedTool !== '3D' )
+    if( mode !== '3D' )
     {
         this.style.border = "solid #0000FF";
-        selectedTool = '3D';
+        mode = '3D';
         planner.style.display = 'none';
         renderer.canvas.style.display = 'block';
         //document.body.appendChild( renderer.canvas );
@@ -146,6 +146,7 @@ function show3d()
         this.style.border = 'none';
         renderer.canvas.style.display = 'none';
         planner.style.display = 'block';
+        mode = '2D';
     }
 }
 
@@ -245,10 +246,17 @@ function createWall()
         x: aux.xf - aux.xo,
         y: aux.yf - aux.yo
     }
+
     //save the position where wall is gonna create
     var middlePoint = {
         x: aux.xo + ( vector.x * 0.5 ), 
         y: aux.yo + ( vector.y * 0.5 )
+    }
+
+    if( aux.yf > aux.yo ) 
+    {
+        vector.y = -vector.y;
+        vector.x = -vector.x;
     }
 
     var normalized = normalize( vector );
