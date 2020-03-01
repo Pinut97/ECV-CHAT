@@ -1,5 +1,5 @@
 
-let canvas, context, mouse;
+let canvas, context, mouse, objectID, objectSelected;
 let context3D, renderer, camera, bg_color = [0, 0, 0, 1];
 
 let lineBtn = document.getElementById('lineBtn');
@@ -16,14 +16,15 @@ let mode = '2D';
 canvas = document.querySelector( "canvas" );
 context = canvas.getContext( "2d" );
 
-let wallsPosition = [];
-
 let objects = [];
 
 function init()
 {
     canvas.height = canvas.parentNode.getBoundingClientRect().height;
     canvas.width = canvas.parentNode.getBoundingClientRect().width;
+
+    objectID = 0;
+    objectSelected = null;
 
     mouse = new Mouse();
     scene = new RD.Scene();
@@ -32,13 +33,15 @@ function init()
     renderer = new RD.Renderer( context3D );
     renderer.loadShaders("shaders.txt");
     document.body.appendChild( renderer.canvas );
-    renderer.canvas.style.display = 'none;'
+    renderer.canvas.style.display = 'none';
 
     camera = new RD.Camera();
     camera.perspective( 60, gl.canvas.width / gl.canvas.height, 1, 10000 );
     camera.lookAt( [0, 1000, 500], [0,0,0], [0,1,0] );
 
     var floor = new RD.SceneNode({
+        type: "floor",
+        //id: objectID,
         position: [0,0,0],
         scale: [canvas.width, 0, canvas.height],
         color: [1, 1, 1, 1],
@@ -47,6 +50,7 @@ function init()
         tiling: 15,
         shader: "phong_texture"
     });
+    objectID++;
     scene.root.addChild( floor );
     
     //update 3D
@@ -88,10 +92,10 @@ function init()
         }
     }
 
-    //context3D.captureKeyboard( true );
+    context3D.captureKeyboard = true;
     context3D.onkeydown = function( e )
     {
-        if( e.key === 87 )
+        if( e.key !== 'undefinded' )
         {
             console.log( "w button" );
             camera.position = vec3.scale( camera.position, camera.position, camera.position + 10 );
@@ -112,6 +116,11 @@ function init()
                     target = ray.collision_point;
                     create3DCube( target );
                     target = null;
+                }
+                else if( selectedTool === 'select' )
+                {
+                    target = ray.collision_point;
+                    selectObject( target );
                 }
             }
         }
@@ -200,6 +209,20 @@ document.getElementById("cubeBtn").addEventListener( 'click', function(){
     }
 });
 
+document.getElementById("selectBtn").addEventListener( 'click', function(){
+    if( selectedTool !== 'select' )
+    {
+        selectedTool = 'select';
+        this.style.border = "solid #0000FF";
+        lineBtn.style.border = 'none';
+        eraseBtn.style.border = 'none';
+    }
+    else{
+        selectedTool = null;
+        this.style.border = 'none';
+    }
+});
+
 //change canvas size when resizing window
 function resizeWindow()
 {
@@ -252,7 +275,7 @@ function drawLine (xo, yo, xf, yf )
 
 function createWall()
 {
-    var aux = wallsPosition[wallsPosition.length - 1];
+    var aux = objects[objects.length - 1];
     //vector between the two points
     var vector = {
         x: aux.xf - aux.xo,
@@ -277,9 +300,9 @@ function createWall()
     var dotProduct = dot( normalized, auxiliarVector );
     var angleInRad = Math.acos( dotProduct );
 
-    var scaleX = Math.trunc(vectorLength(vector))
-
     var wall = new RD.SceneNode({
+        type: "wall",
+        id: objectID,
         position: [middlePoint.x - canvas.width * 0.5, 55, middlePoint.y - canvas.height * 0.5],
         scale: [vectorLength(vector), 115, 3],
         color: [1, 0, 1, 1],
@@ -287,7 +310,7 @@ function createWall()
         texture: "none",
         shader: "phong_texture"
     });
-
+    objectID++;
     wall.rotate( angleInRad, RD.UP, false );
     scene.root.addChild( wall );
 };
@@ -295,13 +318,17 @@ function createWall()
 function create3DCube( target )
 {
     var cube = new RD.SceneNode( {
+        type: "cube",
+        id: objectID,
         position: [target[0], 24, target[2]],
         scale: [100, 50, 100],
         color: [0.9, 0.9, 0.7, 1],
         mesh: "cube",
         shader: "phong"
     });
+    objectID++;
     scene.root.addChild( cube );
+
 };
 
 function createCube( x, y )
@@ -317,6 +344,22 @@ function createCube( x, y )
 
     var target = [x - canvas.width * 0.5, 0, y - canvas.height * 0.5];
     create3DCube( target );
+};
+
+function selectObject( target )
+{
+    for( var i = 1; i < scene._nodes.length; i ++ )
+    {
+        if( scene._nodes[i].type === 'cube' )
+        {
+            var dist = vec3.distance( scene._nodes[i].position, target );
+            console.log( dist );
+            if ( 50 < vec3.distance( scene._nodes[i].position, target ))
+            {
+                console.log( "selected" );
+            }
+        }
+    }
 }
 
 function dot( v1, v2 )
@@ -384,7 +427,7 @@ class Mouse {
                         xf: this.memory.x,
                         yf: this.memory.y
                     }
-                    wallsPosition.push( linePosition );
+                    objects.push( linePosition );
                     createWall();
                     this.memory.x = this.x;
                     this.memory.y = this.y;
