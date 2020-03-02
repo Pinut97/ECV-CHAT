@@ -6,6 +6,8 @@ let lineBtn = document.getElementById('lineBtn');
 let eraseBtn = document.getElementById('eraseBtn');
 let cubeBtn = document.getElementById('cubeBtn');
 
+let inspector = document.getElementById('inspector');
+
 let last = performance.now();
 let dt = 0;
 
@@ -41,7 +43,7 @@ function init()
 
     var floor = new RD.SceneNode({
         type: "floor",
-        //id: objectID,
+        id: objectID,
         position: [0,0,0],
         scale: [canvas.width, 0, canvas.height],
         color: [1, 1, 1, 1],
@@ -50,6 +52,13 @@ function init()
         tiling: 15,
         shader: "phong_texture"
     });
+
+    var floor_object = {
+        type: "floor",
+        id: floor.id,
+        position: floor.position
+    };
+
     objectID++;
     scene.root.addChild( floor );
     
@@ -74,22 +83,25 @@ function init()
 		{
             //orbit camera around
 			camera.orbit( e.deltax * -0.1, RD.UP );
+            camera.orbit( e.deltay * 0.01, RD.LEFT);
 			camera.position = vec3.scaleAndAdd( camera.position, camera.position, RD.UP, e.deltay );
 		}
+        else if(objectSelected !== null && selectedTool === "select")
+        {
+            var ray = camera.getRay( e.canvasx, e.canvasy );
+            if(ray.testPlane( RD.ZERO, RD.UP))
+            {
+                target = ray.collision_point;
+                target[1] += 25;
+                objectSelected.position = target;
+            }
+        }
     }
 
     context3D.onmousewheel = function(e)
 	{
 		//move camera forward
 		camera.position = vec3.scale( camera.position, camera.position, e.wheel < 0 ? 1.1 : 0.9 );
-    }
-    context3D.onmousemove = function(e)
-    {
-        if(e.dragging)
-        {
-            camera.orbit( e.deltax * -0.01, RD.UP );
-            camera.orbit( e.deltay * 0.01, RD.LEFT);
-        }
     }
 
     context3D.captureKeyboard = true;
@@ -99,6 +111,10 @@ function init()
         {
             console.log( "w button" );
             camera.position = vec3.scale( camera.position, camera.position, camera.position + 10 );
+        }
+        if( e.key === 87)
+        {
+            console.log("JIJIJI");
         }
     }
 
@@ -119,8 +135,16 @@ function init()
                 }
                 else if( selectedTool === 'select' )
                 {
-                    target = ray.collision_point;
-                    selectObject( target );
+                    if(objectSelected === null)
+                    {
+                        target = ray.collision_point;
+                        selectObject( target );
+                    }
+                    else 
+                    {
+                        objectSelected = null;
+                        inspector.style.visibility = "hidden";
+                    }
                 }
             }
         }
@@ -171,6 +195,7 @@ document.getElementById("lineBtn").addEventListener( 'click', function(){
         this.style.border = "solid #0000FF";
         eraseBtn.style.border = "none";
         cubeBtn.style.border = "none";
+        selectBtn.style.noder = "none";
     } 
     else {
         selectedTool = null;
@@ -187,6 +212,7 @@ document.getElementById("eraseBtn").addEventListener( 'click', function(){
         this.style.border = "solid #0000FF";
         lineBtn.style.border = "none";
         cubeBtn.style.border = "none";
+        selectBtn.style.border = "none";
     }
     else {
         selectedTool = null;
@@ -202,6 +228,7 @@ document.getElementById("cubeBtn").addEventListener( 'click', function(){
         this.style.border = "solid #0000FF";
         lineBtn.style.border = "none";
         eraseBtn.style.border = "none";
+        selectBtn.style.border = "none";
     }
     else{
         selectedTool = null;
@@ -216,9 +243,12 @@ document.getElementById("selectBtn").addEventListener( 'click', function(){
         this.style.border = "solid #0000FF";
         lineBtn.style.border = 'none';
         eraseBtn.style.border = 'none';
+        cubeBtn.style.border = "none";
     }
     else{
         selectedTool = null;
+        objectSelected = null;
+        inspector.style.visibility = "hidden";
         this.style.border = 'none';
     }
 });
@@ -304,7 +334,7 @@ function createWall()
         type: "wall",
         id: objectID,
         position: [middlePoint.x - canvas.width * 0.5, 55, middlePoint.y - canvas.height * 0.5],
-        scale: [vectorLength(vector), 115, 3],
+        scaling: [vectorLength(vector), 115, 3],
         color: [1, 0, 1, 1],
         mesh: "cube",
         texture: "none",
@@ -314,7 +344,9 @@ function createWall()
     var wall_object = {
         type: "wall",
         id: wall.id,
-        position: wall.position
+        position: wall.position,
+        rotation: wall.rotation,
+        scaling: wall.scaling
     };
 
     objects.push(wall_object);
@@ -329,7 +361,7 @@ function create3DCube( target )
         type: "cube",
         id: objectID,
         position: [target[0], 24, target[2]],
-        scale: [100, 50, 100],
+        scaling: [100, 50, 100],
         color: [0.9, 0.9, 0.7, 1],
         mesh: "cube",
         shader: "phong"
@@ -338,7 +370,9 @@ function create3DCube( target )
     var cube_object = {
         type: "cube",
         id: cube.id,
-        position: cube.position
+        position: cube.position,
+        rotation: cube.rotation,
+        scaling: cube.scaling
     };
 
     objects.push(cube_object);
@@ -370,10 +404,25 @@ function selectObject( target )
         {
             var dist = vec3.distance( objects[i].position, target );
             console.log( dist );
-            if ( 50 < vec3.distance( objects[i].position, target ))
+            if ( 50 > vec3.distance( objects[i].position, target ))
             {
-                console.log( "selected" );
+                objectSelected = retrieveObjectFromScene(objects[i].id);
+                setInspectorValues();
+                inspector.style.visibility = "visible";
+                console.log(objectSelected);
             }
+        }
+    }
+};
+
+function retrieveObjectFromScene(id)
+{
+
+    for(var i = 0; i < scene._nodes.length; i++)
+    {
+        if(scene._nodes[i].id === id)
+        {
+            return scene._nodes[i];
         }
     }
 };
@@ -396,6 +445,24 @@ function normalize( v )
     }
 
     return aux;
+};
+
+function setInspectorValues() 
+{
+    let transform = inspector.querySelectorAll("input");
+
+    transform[0].setAttribute("value", objectSelected.position[0]);
+    transform[1].setAttribute("value", objectSelected.position[1]);
+    transform[2].setAttribute("value", objectSelected.position[2]);
+
+    transform[3].setAttribute("value", objectSelected.rotation[0]);
+    transform[4].setAttribute("value", objectSelected.rotation[1]);
+    transform[5].setAttribute("value", objectSelected.rotation[2]);
+
+    transform[6].setAttribute("value", objectSelected.scaling[0]);
+    transform[7].setAttribute("value", objectSelected.scaling[1]);
+    transform[8].setAttribute("value", objectSelected.scaling[2]);
+
 };
 
 //mouse class
