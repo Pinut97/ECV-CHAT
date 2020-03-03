@@ -34,14 +34,17 @@ function init()
     mouse = new Mouse();
     scene = new RD.Scene();
 
-    context3D = GL.create({width: canvas.width, height: canvas.height});
+    context3D = GL.create({width: canvas.width-1, height: canvas.height});
     renderer = new RD.Renderer( context3D );
     renderer.loadShaders("shaders.txt");
-    document.body.appendChild( renderer.canvas );
+    var wrapper = document.getElementById('wrapper');
+    wrapper.appendChild( renderer.canvas);
     renderer.canvas.style.display = 'none';
 
     numObjects[0] = 0;
     numObjects[1] = 0;
+
+    drawGrid(100);
 
     camera = new RD.Camera();
     camera.perspective( 60, gl.canvas.width / gl.canvas.height, 1, 10000 );
@@ -110,13 +113,13 @@ function init()
 		camera.position = vec3.scale( camera.position, camera.position, e.wheel < 0 ? 1.1 : 0.9 );
     }
 
-    context3D.captureKeyboard(true);
+    context3D.captureKeys(true);
     context3D.onkeydown = function( e )
     {
         if( e.key !== 'undefinded' )
         {
             console.log( "w button" );
-            camera.position = vec3.scale( camera.position, camera.position, camera.position + 10 );
+            //camera.position = vec3.scale( camera.position, camera.position, camera.position + 10 );
         }
         if( e.key === 87)
         {
@@ -280,21 +283,13 @@ function resizeWindow()
     canvas.width = canvas.parentNode.getBoundingClientRect().width;
 };
 
-function drawWall( xo, yo, xf, yf)
-{
-    context.lineWidth = 4;
-    context.style = "black";
-    context.moveTo( xo, yo );
-    context.lineTo( xf, yf );
-    context.stroke();
-};
-
 //draw background grid
 function drawGrid( size )
 {
     x = canvas.width;
     y = canvas.height;
 
+    context.beginPath();
     context.strokeStyle = "lightgrey";
     context.lineWidth = 0.25;
 
@@ -316,6 +311,7 @@ function drawGrid( size )
 
 function drawLine (xo, yo, xf, yf )
 {
+    context.beginPath();
     context.strokeStyle = "black";
     context.lineWidth = 5;
     context.moveTo( xo, yo );
@@ -406,6 +402,7 @@ function create3DCube( target )
 
 function createCube( x, y )
 {
+    context.beginPath();
     context.strokeStyle = "black";
     context.lineWidth = 5;
     context.moveTo( x - 50, y - 50 );
@@ -477,8 +474,7 @@ function removeObjectFromScene(id)
     {
         if(scene._nodes[i].id === id)
         {
-            console.log("deleting from scene");
-            scene._nodes.splice(i, 1);
+            scene.root.children.splice(i, 1);
         }
     }
 };
@@ -525,7 +521,6 @@ function addObjectToList(object) {
     var ul = document.getElementById("object-list");
     var li = document.createElement("li");
     li.onclick = function(){
-        console.log("JIJIJI");
         var text = this.value;
         console.log(text);
     };
@@ -544,7 +539,6 @@ function addObjectToList(object) {
 
 function deleteObjectFromList(object) {
     var ul = document.getElementById("object-list");
-    console.log("removing");
 };
 
 //mouse class

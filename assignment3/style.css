@@ -1,11 +1,8 @@
 
 * { margin:0; padding:0; }
 
-html {
+html, body {
     height: 100%;
-}
-
-body {
     min-height: 100%;
 }
 
@@ -17,37 +14,50 @@ body {
 }
 
 #planner {
-    background-color: rgb(226, 226, 226);
-    height: 850px;
-    width: 70%;
-    float: left;
+    grid-column-start: 2;
+    background-color: rgb(49, 76, 133);
 }
 
-#inspector {
-    background-color: rgb(200, 200, 200);
-    width: 25%;
-    float: left;
-    margin-left: 20px;
-    padding-left: 5px;
-    padding-top: 10px;
-    padding-bottom: 10px;
-    height: 50%;
-    visibility: hidden;
-    display: none;
+.wrapper {
+    display: grid;
+    grid-template-columns: 30% 70%;
+    height: 91%;
 }
 
-#global-information {
-    background-color: rgb(200, 200, 200);
-    width: 25%;
-    float: left;
-    margin-left: 20px;
-    padding-left: 5px;
-    padding-top: 10px;
-    padding-bottom: 10px;
-    padding-right: 10px;
-    height: 50%;
-    visibility: visible;
-    display: block;
+.tools {
+    grid-column-start: 1;
+    background-color: white;
+}
+
+.inspector {
+    height: 30%;
+    padding: 1em;
+    padding-top: 0.5em;
+    margin: 2px;
+    border-radius: 5%;
+    background-color: lightgrey;
+    overflow: hidden;
+    overflow-y: scroll;
+}
+
+.objectInfo {
+    height: 30%;
+    margin: 1em;
+    font-family: sans-serif;
+    background-color: lightgrey;
+    padding: 2em;
+}
+
+#inspector-title{
+    font-family: sans-serif;
+    font-size: 1em;
+    font-weight: bold;
+    width: 10em;
+    border: solid darkgrey;
+    background-color: grey;
+    padding: 0.5em;
+    margin: auto;
+    text-align: center;
 }
 
 #toolSelector {
@@ -81,7 +91,7 @@ button.btn:active {
 }
 
 form {
-    margin: 0 auto;
+    margin: 0.3em;
     display: flex;
     flex-flow: row wrap;
     align-items: center;
