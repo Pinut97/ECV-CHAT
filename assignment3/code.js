@@ -1,6 +1,12 @@
 
-let canvas, context, mouse;
+let canvas, context, mouse, objectID, objectSelected;
 let context3D, renderer, camera, bg_color = [0, 0, 0, 1];
+
+let lineBtn = document.getElementById('lineBtn');
+let eraseBtn = document.getElementById('eraseBtn');
+let cubeBtn = document.getElementById('cubeBtn');
+
+let inspector = document.getElementById('inspector');
 
 let last = performance.now();
 let dt = 0;
@@ -8,15 +14,19 @@ let dt = 0;
 let gridWidth = 10;
 
 let selectedTool = null;
+let mode = '2D';
 canvas = document.querySelector( "canvas" );
 context = canvas.getContext( "2d" );
 
-let wallsPosition = [];
+let objects = [];
 
 function init()
 {
     canvas.height = canvas.parentNode.getBoundingClientRect().height;
     canvas.width = canvas.parentNode.getBoundingClientRect().width;
+
+    objectID = 0;
+    objectSelected = null;
 
     mouse = new Mouse();
     scene = new RD.Scene();
@@ -25,87 +35,122 @@ function init()
     renderer = new RD.Renderer( context3D );
     renderer.loadShaders("shaders.txt");
     document.body.appendChild( renderer.canvas );
+    renderer.canvas.style.display = 'none';
 
     camera = new RD.Camera();
-    camera.perspective( 60, gl.canvas.width / gl.canvas.height, 1, 1000 );
-    camera.lookAt( [0, 100, 100], [0,0,0], [0,1,0] );
+    camera.perspective( 60, gl.canvas.width / gl.canvas.height, 1, 10000 );
+    camera.lookAt( [0, 1000, 500], [0,0,0], [0,1,0] );
 
     var floor = new RD.SceneNode({
+        type: "floor",
+        id: objectID,
         position: [0,0,0],
-        scale: 100,
+        scale: [canvas.width, 0, canvas.height],
         color: [1, 1, 1, 1],
         mesh: "planeXZ",
         texture: "floor.png",
-        tiling: 4,
+        tiling: 15,
         shader: "phong_texture"
     });
 
-    floor.update = function( dt ){
-        this.rotate( dt * 0.1, RD.UP );
-    }
+    var floor_object = {
+        type: "floor",
+        id: floor.id,
+        position: floor.position
+    };
 
+    objectID++;
     scene.root.addChild( floor );
-
-    var wall = new RD.SceneNode({
-        position: [-50,0,0],
-        scaling: 30,
-        color: [1, 0.5, 1, 1],
-        mesh: "plane",
-        shader: "phong_texture"
-    });
-    //scene.root.addChild( wall );
     
-    context3D.onmousemove = function(e)
-	{
-		if(e.dragging)
-		{
-            //orbit camera around
-            console.log( "dragging" );
-			camera.orbit( e.deltax * -0.1, RD.UP );
-			camera.position = vec3.scaleAndAdd( camera.position, camera.position, RD.UP, e.deltay );
-		}
-    }
-
-    
+    //update 3D
     context3D.onupdate = function( dt )
     {
         computeDt();
         scene.update(dt);
     }
-
+    //draw 3D
     context3D.ondraw = function()
     {
         renderer.clear( bg_color );
         renderer.render( scene, camera );
     }
 
+    //mouse 3D actions
     context3D.captureMouse( true );
+    context3D.onmousemove = function(e)
+	{
+		if(e.dragging)
+		{
+            //orbit camera around
+			camera.orbit( e.deltax * -0.1, RD.UP );
+            camera.orbit( e.deltay * 0.01, RD.LEFT);
+			camera.position = vec3.scaleAndAdd( camera.position, camera.position, RD.UP, e.deltay );
+		}
+        else if(objectSelected !== null && selectedTool === "select")
+        {
+            var ray = camera.getRay( e.canvasx, e.canvasy );
+            if(ray.testPlane( RD.ZERO, RD.UP))
+            {
+                target = ray.collision_point;
+                target[1] += 25;
+                objectSelected.position = target;
+            }
+        }
+    }
+
     context3D.onmousewheel = function(e)
 	{
 		//move camera forward
 		camera.position = vec3.scale( camera.position, camera.position, e.wheel < 0 ? 1.1 : 0.9 );
     }
-    context3D.onmousemove = function(e)
-    {
-        if(e.dragging)
-        {
-            camera.orbit( e.deltax * -0.01, RD.UP );
-            camera.orbit( e.deltay * 0.01, RD.LEFT);
-        }
-    }
 
-    //context3D.captureKeyboard( true );
+    context3D.captureKeyboard = true;
     context3D.onkeydown = function( e )
     {
-        if( e.key === 87 )
+        if( e.key !== 'undefinded' )
         {
             console.log( "w button" );
             camera.position = vec3.scale( camera.position, camera.position, camera.position + 10 );
         }
+        if( e.key === 87)
+        {
+            console.log("JIJIJI");
+        }
     }
 
+    var target = null;
+    context3D.onmouseup = function( e )
+    {
+        if(e.click_time < 200) //fast click
+		{
+			//compute collision with floor plane
+			var ray = camera.getRay( e.canvasx, e.canvasy );
+            if( ray.testPlane( RD.ZERO, RD.UP ) ) //collision
+            {
+                if( selectedTool === 'cube' )
+                {
+                    target = ray.collision_point;
+                    create3DCube( target );
+                    target = null;
+                }
+                else if( selectedTool === 'select' )
+                {
+                    if(objectSelected === null)
+                    {
+                        target = ray.collision_point;
+                        selectObject( target );
+                    }
+                    else 
+                    {
+                        objectSelected = null;
+                        inspector.style.visibility = "hidden";
+                    }
+                }
+            }
+        }
+    }
+    //call for 3d loop
     context3D.animate();
-
 };
 
 window.addEventListener( 'load', init, false );
@@ -126,15 +171,31 @@ document.getElementById("3dBtn").addEventListener( 'click', show3d );
 
 function show3d()
 {
-    canvas.style.display = 'none';
-    document.body.appendChild( renderer.canvas );
-    renderer.render( scene, camera );
-}
+    var planner = document.getElementById( 'planner' );
+    if( mode !== '3D' )
+    {
+        this.style.border = "solid #0000FF";
+        mode = '3D';
+        planner.style.display = 'none';
+        renderer.canvas.style.display = 'block';
+        //document.body.appendChild( renderer.canvas );
+    }
+    else
+    {
+        this.style.border = 'none';
+        renderer.canvas.style.display = 'none';
+        planner.style.display = 'block';
+        mode = '2D';
+    }
+};
 
 document.getElementById("lineBtn").addEventListener( 'click', function(){
     if(selectedTool != "line"){
         selectedTool = "line";
         this.style.border = "solid #0000FF";
+        eraseBtn.style.border = "none";
+        cubeBtn.style.border = "none";
+        selectBtn.style.noder = "none";
     } 
     else {
         selectedTool = null;
@@ -145,13 +206,50 @@ document.getElementById("lineBtn").addEventListener( 'click', function(){
 });
 
 document.getElementById("eraseBtn").addEventListener( 'click', function(){ 
-    if(selectedTool != "erase"){
+    //select erase tool if not already selected, unselect it otherwise
+    if( selectedTool != "erase" ){
         selectedTool = "erase";
         this.style.border = "solid #0000FF";
+        lineBtn.style.border = "none";
+        cubeBtn.style.border = "none";
+        selectBtn.style.border = "none";
     }
     else {
         selectedTool = null;
         this.style.border = "none";
+    }
+});
+
+document.getElementById("cubeBtn").addEventListener( 'click', function(){
+    //select cube tool if not already selected, unselect it otherwise
+    if( selectedTool !== 'cube' )
+    {
+        selectedTool = 'cube';
+        this.style.border = "solid #0000FF";
+        lineBtn.style.border = "none";
+        eraseBtn.style.border = "none";
+        selectBtn.style.border = "none";
+    }
+    else{
+        selectedTool = null;
+        this.style.border = 'none';
+    }
+});
+
+document.getElementById("selectBtn").addEventListener( 'click', function(){
+    if( selectedTool !== 'select' )
+    {
+        selectedTool = 'select';
+        this.style.border = "solid #0000FF";
+        lineBtn.style.border = 'none';
+        eraseBtn.style.border = 'none';
+        cubeBtn.style.border = "none";
+    }
+    else{
+        selectedTool = null;
+        objectSelected = null;
+        inspector.style.visibility = "hidden";
+        this.style.border = 'none';
     }
 });
 
@@ -171,6 +269,7 @@ function drawWall( xo, yo, xf, yf)
     context.stroke();
 };
 
+<<<<<<< HEAD
 function draw()
 {
     clear();
@@ -188,6 +287,8 @@ function clear()
     context.clearRect( 0, 0, canvas.width, canvas.height );
 };
 
+=======
+>>>>>>> e8b95b096654e0b819267028df33b94294b29bbd
 //draw background grid
 function drawGrid( size )
 {
@@ -202,7 +303,6 @@ function drawGrid( size )
     {
         context.moveTo( i, 0 );
         context.lineTo( i, y );
-        context.stroke();
     }
 
     //horizontal lines
@@ -210,8 +310,8 @@ function drawGrid( size )
     {
         context.moveTo( 0, i );
         context.lineTo( x, i );
-        context.stroke();
     }
+    context.stroke();
 };
 
 function drawLine (xo, yo, xf, yf )
@@ -219,40 +319,54 @@ function drawLine (xo, yo, xf, yf )
     context.strokeStyle = "black";
     context.lineWidth = 5;
     context.moveTo( xo, yo );
-    context.lineTo(  xf, yf );
+    context.lineTo( xf, yf );
     context.stroke();
 };
 
 function createWall()
 {
-    var aux = wallsPosition[wallsPosition.length - 1];
+    var aux = objects[objects.length - 1];
     //vector between the two points
     var vector = {
         x: aux.xf - aux.xo,
         y: aux.yf - aux.yo
     }
+
     //save the position where wall is gonna create
     var middlePoint = {
         x: aux.xo + ( vector.x * 0.5 ), 
         y: aux.yo + ( vector.y * 0.5 )
     }
 
+    if( aux.yf > aux.yo ) 
+    {
+        vector.y = -vector.y;
+        vector.x = -vector.x;
+    }
+
     var normalized = normalize( vector );
     var auxiliarVector = { x: 1, y: 0}
     
     var dotProduct = dot( normalized, auxiliarVector );
+<<<<<<< HEAD
     var angleInRads = Math.acos( dotProduct );
 
     var scaleX = Math.trunc(vectorLength(vector))
+=======
+    var angleInRad = Math.acos( dotProduct );
+>>>>>>> e8b95b096654e0b819267028df33b94294b29bbd
 
     var wall = new RD.SceneNode({
-        position: [-50, 10, 10],//middlePoint,
-        //scale: [10, 0, 40],
-        scaling: 30,
-        color: [1, 0.5, 1, 1],
-        mesh: "plane",
+        type: "wall",
+        id: objectID,
+        position: [middlePoint.x - canvas.width * 0.5, 55, middlePoint.y - canvas.height * 0.5],
+        scaling: [vectorLength(vector), 115, 3],
+        color: [1, 0, 1, 1],
+        mesh: "cube",
+        texture: "none",
         shader: "phong_texture"
     });
+<<<<<<< HEAD
 /*
     var wall = new RD.SceneNode({
         position: [-50,10,10],
@@ -264,7 +378,93 @@ function createWall()
 */
     var angleInDegrees = (angleInRads * 180) / Math.PI;
     wall.rotate( angleInRads, RD.UP, false );
+=======
+
+    var wall_object = {
+        type: "wall",
+        id: wall.id,
+        position: wall.position,
+        rotation: wall.rotation,
+        scaling: wall.scaling
+    };
+
+    objects.push(wall_object);
+    objectID++;
+    wall.rotate( angleInRad, RD.UP, false );
+>>>>>>> e8b95b096654e0b819267028df33b94294b29bbd
     scene.root.addChild( wall );
+};
+
+function create3DCube( target )
+{
+    var cube = new RD.SceneNode( {
+        type: "cube",
+        id: objectID,
+        position: [target[0], 24, target[2]],
+        scaling: [100, 50, 100],
+        color: [0.9, 0.9, 0.7, 1],
+        mesh: "cube",
+        shader: "phong"
+    });
+
+    var cube_object = {
+        type: "cube",
+        id: cube.id,
+        position: cube.position,
+        rotation: cube.rotation,
+        scaling: cube.scaling
+    };
+
+    objects.push(cube_object);
+    objectID++;
+    scene.root.addChild( cube );
+
+};
+
+function createCube( x, y )
+{
+    context.strokeStyle = "black";
+    context.lineWidth = 5;
+    context.moveTo( x - 50, y - 50 );
+    context.lineTo( x + 50, y - 50);
+    context.lineTo( x + 50, y + 50 );
+    context.lineTo( x - 50, y + 50 );
+    context.lineTo( x - 50, y - 50 );
+    context.stroke();
+
+    var target = [x - canvas.width * 0.5, 0, y - canvas.height * 0.5];
+    create3DCube( target );
+};
+
+function selectObject( target )
+{
+    for( var i = 0; i < objects.length; i ++ )
+    {
+        if( objects[i].type === 'cube' )
+        {
+            var dist = vec3.distance( objects[i].position, target );
+            console.log( dist );
+            if ( 50 > vec3.distance( objects[i].position, target ))
+            {
+                objectSelected = retrieveObjectFromScene(objects[i].id);
+                setInspectorValues();
+                inspector.style.visibility = "visible";
+                console.log(objectSelected);
+            }
+        }
+    }
+};
+
+function retrieveObjectFromScene(id)
+{
+
+    for(var i = 0; i < scene._nodes.length; i++)
+    {
+        if(scene._nodes[i].id === id)
+        {
+            return scene._nodes[i];
+        }
+    }
 };
 
 function dot( v1, v2 )
@@ -285,6 +485,24 @@ function normalize( v )
     }
 
     return aux;
+};
+
+function setInspectorValues() 
+{
+    let transform = inspector.querySelectorAll("input");
+
+    transform[0].setAttribute("value", objectSelected.position[0]);
+    transform[1].setAttribute("value", objectSelected.position[1]);
+    transform[2].setAttribute("value", objectSelected.position[2]);
+
+    transform[3].setAttribute("value", objectSelected.rotation[0]);
+    transform[4].setAttribute("value", objectSelected.rotation[1]);
+    transform[5].setAttribute("value", objectSelected.rotation[2]);
+
+    transform[6].setAttribute("value", objectSelected.scaling[0]);
+    transform[7].setAttribute("value", objectSelected.scaling[1]);
+    transform[8].setAttribute("value", objectSelected.scaling[2]);
+
 };
 
 //mouse class
@@ -332,11 +550,15 @@ class Mouse {
                         xf: this.memory.x,
                         yf: this.memory.y
                     }
-                    wallsPosition.push( linePosition );
+                    objects.push( linePosition );
                     createWall();
                     this.memory.x = this.x;
                     this.memory.y = this.y;
                 }
+            }
+            else if( selectedTool === 'cube' )
+            {
+                createCube( this.x, this.y );
             }
             this.pressed = "false";
         }
