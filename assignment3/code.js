@@ -372,7 +372,7 @@ function selectObject( target )
             console.log( dist );
             if ( 50 < vec3.distance( objects[i].position, target ))
             {
-                console.log( "selected" );
+                selectObject = objects[i];
             }
         }
     }
