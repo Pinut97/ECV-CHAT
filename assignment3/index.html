@@ -11,9 +11,55 @@
             <button class="btn" id="cubeBtn" >CUBE</button>
             <button class="btn" id="selectBtn" >SELECT</button>
         </div>
+        
+        <div id="inspector">
+            Transformation
+            <div>
+                Translate
+                <form>
+                    <label for="translateX">x:</label>
+                    <input id="translateX" type="text"></input>
+                    <label for="translateY">y:</label>
+                    <input id="translateY" type="text"></input>
+                    <label for="translateZ">z:</label>
+                    <input id="translateZ" type="text"></input>
+                </form>
+            </div>
+            <div>
+                Rotate
+                <form>
+                    <label for="rotateX">x:</label>
+                    <input id="rotateX" type="text"></input>
+                    <label for="rotateY">y:</label>
+                    <input id="rotateY" type="text"></input>
+                    <label for="rotateZ">z:</label>
+                    <input id="rotateZ" type="text"></input>
+                </form>
+            </div>
+            <div>
+                Scale
+                <form>
+                    <label for="scaleX">x:</label>
+                    <input id="scaleX" type="text"></input>
+                    <label for="scaleY">y:</label>
+                    <input id="scaleY" type="text"></input>
+                    <label for="scaleZ">z:</label>
+                    <input id="scaleZ" type="text"></input>
+                </form>
+            </div>
+        </div>
+
+        <div id="global-information">
+            Objects:
+            <ul id="object-list">
+            </ul>
+        </div>
         <div id="planner">
             <canvas id="canvas" style="border: solid black;"></canvas>
         </div>
+
+
+    </body>
         <script type="text/javascript" src="modules/gl-matrix-min.js"></script>
         <script type="text/javascript" src="modules/litegl.js"></script>
         <script type="text/javascript" src="modules/rendeer.js"></script>

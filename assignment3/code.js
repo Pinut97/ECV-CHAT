@@ -6,6 +6,11 @@ let lineBtn = document.getElementById('lineBtn');
 let eraseBtn = document.getElementById('eraseBtn');
 let cubeBtn = document.getElementById('cubeBtn');
 
+let inspector = document.getElementById('inspector'); 
+let globalInformation = document.getElementById('global-information');
+
+let numObjects = []; //number of instances of each type of object
+
 let last = performance.now();
 let dt = 0;
 
@@ -35,13 +40,16 @@ function init()
     document.body.appendChild( renderer.canvas );
     renderer.canvas.style.display = 'none';
 
+    numObjects[0] = 0;
+    numObjects[1] = 0;
+
     camera = new RD.Camera();
     camera.perspective( 60, gl.canvas.width / gl.canvas.height, 1, 10000 );
     camera.lookAt( [0, 1000, 500], [0,0,0], [0,1,0] );
 
     var floor = new RD.SceneNode({
         type: "floor",
-        //id: objectID,
+        id: objectID,
         position: [0,0,0],
         scale: [canvas.width, 0, canvas.height],
         color: [1, 1, 1, 1],
@@ -50,6 +58,13 @@ function init()
         tiling: 15,
         shader: "phong_texture"
     });
+
+    var floor_object = {
+        type: "floor",
+        id: floor.id,
+        position: floor.position
+    };
+
     objectID++;
     scene.root.addChild( floor );
     
@@ -74,8 +89,19 @@ function init()
 		{
             //orbit camera around
 			camera.orbit( e.deltax * -0.1, RD.UP );
+            camera.orbit( e.deltay * 0.01, RD.LEFT);
 			camera.position = vec3.scaleAndAdd( camera.position, camera.position, RD.UP, e.deltay );
 		}
+        else if(objectSelected !== null && selectedTool === "select")
+        {
+            var ray = camera.getRay( e.canvasx, e.canvasy );
+            if(ray.testPlane( RD.ZERO, RD.UP))
+            {
+                target = ray.collision_point;
+                target[1] += 25;
+                objectSelected.position = target;
+            }
+        }
     }
 
     context3D.onmousewheel = function(e)
@@ -83,22 +109,18 @@ function init()
 		//move camera forward
 		camera.position = vec3.scale( camera.position, camera.position, e.wheel < 0 ? 1.1 : 0.9 );
     }
-    context3D.onmousemove = function(e)
-    {
-        if(e.dragging)
-        {
-            camera.orbit( e.deltax * -0.01, RD.UP );
-            camera.orbit( e.deltay * 0.01, RD.LEFT);
-        }
-    }
 
-    context3D.captureKeyboard = true;
+    context3D.captureKeyboard(true);
     context3D.onkeydown = function( e )
     {
         if( e.key !== 'undefinded' )
         {
             console.log( "w button" );
             camera.position = vec3.scale( camera.position, camera.position, camera.position + 10 );
+        }
+        if( e.key === 87)
+        {
+            console.log("JIJIJI");
         }
     }
 
@@ -119,8 +141,27 @@ function init()
                 }
                 else if( selectedTool === 'select' )
                 {
-                    target = ray.collision_point;
-                    selectObject( target );
+                    if(objectSelected === null)
+                    {
+                        target = ray.collision_point;
+                        selectObject( target );
+                    }
+                    else 
+                    {
+                        objectSelected = null;
+                        inspector.style.display = "none";
+                        inspector.style.visibility = "hidden";
+                        globalInformation.style.display = "block";
+                        globalInformation.style.visibility = "visible";
+                    }
+                }
+                else if(selectedTool === 'erase')
+                {
+                    if(objectSelected === null)
+                    {
+                        target = ray.collision_point;
+                        deleteObject( target );
+                    }
                 }
             }
         }
@@ -171,6 +212,7 @@ document.getElementById("lineBtn").addEventListener( 'click', function(){
         this.style.border = "solid #0000FF";
         eraseBtn.style.border = "none";
         cubeBtn.style.border = "none";
+        selectBtn.style.noder = "none";
     } 
     else {
         selectedTool = null;
@@ -187,6 +229,7 @@ document.getElementById("eraseBtn").addEventListener( 'click', function(){
         this.style.border = "solid #0000FF";
         lineBtn.style.border = "none";
         cubeBtn.style.border = "none";
+        selectBtn.style.border = "none";
     }
     else {
         selectedTool = null;
@@ -202,6 +245,7 @@ document.getElementById("cubeBtn").addEventListener( 'click', function(){
         this.style.border = "solid #0000FF";
         lineBtn.style.border = "none";
         eraseBtn.style.border = "none";
+        selectBtn.style.border = "none";
     }
     else{
         selectedTool = null;
@@ -216,9 +260,15 @@ document.getElementById("selectBtn").addEventListener( 'click', function(){
         this.style.border = "solid #0000FF";
         lineBtn.style.border = 'none';
         eraseBtn.style.border = 'none';
+        cubeBtn.style.border = "none";
     }
     else{
         selectedTool = null;
+        objectSelected = null;
+        inspector.style.display = "none";
+        inspector.style.visibility = "hidden";
+        globalInformation.display = "block";
+        globalInformation.visibility = "visible";
         this.style.border = 'none';
     }
 });
@@ -304,7 +354,7 @@ function createWall()
         type: "wall",
         id: objectID,
         position: [middlePoint.x - canvas.width * 0.5, 55, middlePoint.y - canvas.height * 0.5],
-        scale: [vectorLength(vector), 115, 3],
+        scaling: [vectorLength(vector), 115, 3],
         color: [1, 0, 1, 1],
         mesh: "cube",
         texture: "none",
@@ -314,13 +364,17 @@ function createWall()
     var wall_object = {
         type: "wall",
         id: wall.id,
-        position: wall.position
+        position: wall.position,
+        rotation: wall.rotation,
+        scaling: wall.scaling
     };
 
     objects.push(wall_object);
+    numObjects[0]++;
     objectID++;
     wall.rotate( angleInRad, RD.UP, false );
     scene.root.addChild( wall );
+    addObjectToList(wall_object);
 };
 
 function create3DCube( target )
@@ -329,7 +383,7 @@ function create3DCube( target )
         type: "cube",
         id: objectID,
         position: [target[0], 24, target[2]],
-        scale: [100, 50, 100],
+        scaling: [100, 50, 100],
         color: [0.9, 0.9, 0.7, 1],
         mesh: "cube",
         shader: "phong"
@@ -338,13 +392,16 @@ function create3DCube( target )
     var cube_object = {
         type: "cube",
         id: cube.id,
-        position: cube.position
+        position: cube.position,
+        rotation: cube.rotation,
+        scaling: cube.scaling
     };
 
     objects.push(cube_object);
+    numObjects[1]++;
     objectID++;
     scene.root.addChild( cube );
-
+    addObjectToList(cube_object);
 };
 
 function createCube( x, y )
@@ -362,6 +419,25 @@ function createCube( x, y )
     create3DCube( target );
 };
 
+function deleteObject(target)
+{
+    for(var i = 0; i < objects.length; i++)
+    {
+        if(objects[i].type === "cube")
+        {
+            var dist = vec3.distance( objects[i].position, target );
+            console.log( dist );
+
+            if ( 50 > vec3.distance( objects[i].position, target ))
+            {
+                removeObjectFromScene(objects[i].id);
+                deleteObjectFromList(objects[i]);
+                objects.splice(i, 1);
+            }
+        }
+    }
+};
+
 function selectObject( target )
 {
     for( var i = 0; i < objects.length; i ++ )
@@ -370,10 +446,39 @@ function selectObject( target )
         {
             var dist = vec3.distance( objects[i].position, target );
             console.log( dist );
-            if ( 50 < vec3.distance( objects[i].position, target ))
+            if ( 50 > vec3.distance( objects[i].position, target ))
             {
-                selectObject = objects[i];
+                objectSelected = retrieveObjectFromScene(objects[i].id);
+                setInspectorValues();
+                globalInformation.style.display = "none";
+                globalInformation.style.visibility = "hidden";
+                inspector.style.display = "block";
+                inspector.style.visibility = "visible";
+                console.log(objectSelected);
             }
+        }
+    }
+};
+
+function retrieveObjectFromScene(id)
+{
+    for(var i = 0; i < scene._nodes.length; i++)
+    {
+        if(scene._nodes[i].id === id)
+        {
+            return scene._nodes[i];
+        }
+    }
+};
+
+function removeObjectFromScene(id)
+{
+    for(var i = 0; i < scene._nodes.length; i++)
+    {
+        if(scene._nodes[i].id === id)
+        {
+            console.log("deleting from scene");
+            scene._nodes.splice(i, 1);
         }
     }
 };
@@ -396,6 +501,50 @@ function normalize( v )
     }
 
     return aux;
+};
+
+function setInspectorValues() 
+{
+    let transform = inspector.querySelectorAll("input");
+
+    transform[0].setAttribute("value", objectSelected.position[0]);
+    transform[1].setAttribute("value", objectSelected.position[1]);
+    transform[2].setAttribute("value", objectSelected.position[2]);
+
+    transform[3].setAttribute("value", objectSelected.rotation[0]);
+    transform[4].setAttribute("value", objectSelected.rotation[1]);
+    transform[5].setAttribute("value", objectSelected.rotation[2]);
+
+    transform[6].setAttribute("value", objectSelected.scaling[0]);
+    transform[7].setAttribute("value", objectSelected.scaling[1]);
+    transform[8].setAttribute("value", objectSelected.scaling[2]);
+
+}; 
+
+function addObjectToList(object) {
+    var ul = document.getElementById("object-list");
+    var li = document.createElement("li");
+    li.onclick = function(){
+        console.log("JIJIJI");
+        var text = this.value;
+        console.log(text);
+    };
+
+    if(object.type === "wall")
+    {
+        li.appendChild(document.createTextNode("wall" + "(" + numObjects[0] + ")")); 
+    }
+    else if(object.type === "cube") 
+    {
+        li.appendChild(document.createTextNode("cube" + "(" + numObjects[1] + ")")); 
+    }
+                                  
+    ul.appendChild(li);
+};
+
+function deleteObjectFromList(object) {
+    var ul = document.getElementById("object-list");
+    console.log("removing");
 };
 
 //mouse class
