@@ -6,7 +6,10 @@ let lineBtn = document.getElementById('lineBtn');
 let eraseBtn = document.getElementById('eraseBtn');
 let cubeBtn = document.getElementById('cubeBtn');
 
-let inspector = document.getElementById('inspector');
+let inspector = document.getElementById('inspector'); 
+let globalInformation = document.getElementById('global-information');
+
+let numObjects = []; //number of instances of each type of object
 
 let last = performance.now();
 let dt = 0;
@@ -36,6 +39,9 @@ function init()
     renderer.loadShaders("shaders.txt");
     document.body.appendChild( renderer.canvas );
     renderer.canvas.style.display = 'none';
+
+    numObjects[0] = 0;
+    numObjects[1] = 0;
 
     camera = new RD.Camera();
     camera.perspective( 60, gl.canvas.width / gl.canvas.height, 1, 10000 );
@@ -143,7 +149,10 @@ function init()
                     else 
                     {
                         objectSelected = null;
+                        inspector.style.display = "none";
                         inspector.style.visibility = "hidden";
+                        globalInformation.style.display = "block";
+                        globalInformation.style.visibility = "visible";
                     }
                 }
             }
@@ -248,7 +257,10 @@ document.getElementById("selectBtn").addEventListener( 'click', function(){
     else{
         selectedTool = null;
         objectSelected = null;
+        inspector.style.display = "none";
         inspector.style.visibility = "hidden";
+        globalInformation.display = "block";
+        globalInformation.visibility = "visible";
         this.style.border = 'none';
     }
 });
@@ -350,9 +362,11 @@ function createWall()
     };
 
     objects.push(wall_object);
+    numObjects[0]++;
     objectID++;
     wall.rotate( angleInRad, RD.UP, false );
     scene.root.addChild( wall );
+    addObjectToList(wall_object);
 };
 
 function create3DCube( target )
@@ -376,9 +390,10 @@ function create3DCube( target )
     };
 
     objects.push(cube_object);
+    numObjects[1]++;
     objectID++;
     scene.root.addChild( cube );
-
+    addObjectToList(cube_object);
 };
 
 function createCube( x, y )
@@ -408,6 +423,9 @@ function selectObject( target )
             {
                 objectSelected = retrieveObjectFromScene(objects[i].id);
                 setInspectorValues();
+                globalInformation.style.display = "none";
+                globalInformation.style.visibility = "hidden";
+                inspector.style.display = "block";
                 inspector.style.visibility = "visible";
                 console.log(objectSelected);
             }
@@ -462,6 +480,31 @@ function setInspectorValues()
     transform[6].setAttribute("value", objectSelected.scaling[0]);
     transform[7].setAttribute("value", objectSelected.scaling[1]);
     transform[8].setAttribute("value", objectSelected.scaling[2]);
+
+}; 
+
+function addObjectToList(object) {
+    var ul = document.getElementById("object-list");
+    var li = document.createElement("li");
+    li.onclick = function(){
+        console.log("JIJIJI");
+        var text = this.value;
+        console.log(text);
+    };
+
+    if(object.type === "wall")
+    {
+        li.appendChild(document.createTextNode("wall" + "(" + numObjects[0] + ")")); 
+    }
+    else if(object.type === "cube") 
+    {
+        li.appendChild(document.createTextNode("cube" + "(" + numObjects[1] + ")")); 
+    }
+                                  
+    ul.appendChild(li);
+};
+
+function deleteObjectFromList(object) {
 
 };
 

@@ -33,6 +33,21 @@ body {
     padding-bottom: 10px;
     height: 50%;
     visibility: hidden;
+    display: none;
+}
+
+#global-information {
+    background-color: rgb(200, 200, 200);
+    width: 25%;
+    float: left;
+    margin-left: 20px;
+    padding-left: 5px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    padding-right: 10px;
+    height: 50%;
+    visibility: visible;
+    display: block;
 }
 
 #toolSelector {
@@ -83,4 +98,11 @@ form input {
     display: inline-block;
     float: right;
     width: 20%;
+}
+
+ul li {
+    list-style-type: none;
+    border: 3px rgb(50, 50, 50) solid;
+    padding-right: 10px;
+    cursor: pointer;
 }
