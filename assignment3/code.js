@@ -110,7 +110,7 @@ function init()
 		camera.position = vec3.scale( camera.position, camera.position, e.wheel < 0 ? 1.1 : 0.9 );
     }
 
-    context3D.captureKeyboard = true;
+    context3D.captureKeyboard(true);
     context3D.onkeydown = function( e )
     {
         if( e.key !== 'undefinded' )
@@ -153,6 +153,14 @@ function init()
                         inspector.style.visibility = "hidden";
                         globalInformation.style.display = "block";
                         globalInformation.style.visibility = "visible";
+                    }
+                }
+                else if(selectedTool === 'erase')
+                {
+                    if(objectSelected === null)
+                    {
+                        target = ray.collision_point;
+                        deleteObject( target );
                     }
                 }
             }
@@ -411,6 +419,25 @@ function createCube( x, y )
     create3DCube( target );
 };
 
+function deleteObject(target)
+{
+    for(var i = 0; i < objects.length; i++)
+    {
+        if(objects[i].type === "cube")
+        {
+            var dist = vec3.distance( objects[i].position, target );
+            console.log( dist );
+
+            if ( 50 > vec3.distance( objects[i].position, target ))
+            {
+                removeObjectFromScene(objects[i].id);
+                deleteObjectFromList(objects[i]);
+                objects.splice(i, 1);
+            }
+        }
+    }
+};
+
 function selectObject( target )
 {
     for( var i = 0; i < objects.length; i ++ )
@@ -435,12 +462,23 @@ function selectObject( target )
 
 function retrieveObjectFromScene(id)
 {
-
     for(var i = 0; i < scene._nodes.length; i++)
     {
         if(scene._nodes[i].id === id)
         {
             return scene._nodes[i];
+        }
+    }
+};
+
+function removeObjectFromScene(id)
+{
+    for(var i = 0; i < scene._nodes.length; i++)
+    {
+        if(scene._nodes[i].id === id)
+        {
+            console.log("deleting from scene");
+            scene._nodes.splice(i, 1);
         }
     }
 };
@@ -505,7 +543,8 @@ function addObjectToList(object) {
 };
 
 function deleteObjectFromList(object) {
-
+    var ul = document.getElementById("object-list");
+    console.log("removing");
 };
 
 //mouse class
