@@ -21,8 +21,8 @@
                 <div class="objectInfo">
                     <div id="inspector-title">Transformation</div>
                     <div>
-                        Translate
-                        <form>
+                        <div class="subtitle">Position</div>
+                        <form class="parameters">
                             <label for="translateX">x:</label>
                             <input id="translateX" type="text"></input>
                             <label for="translateY">y:</label>
@@ -32,7 +32,7 @@
                         </form>
                     </div>
                     <div>
-                        Rotate
+                        <div class="subtitle">Rotation</div>
                         <form>
                             <label for="rotateX">x:</label>
                             <input id="rotateX" type="text"></input>
@@ -43,7 +43,7 @@
                         </form>
                     </div>
                     <div>
-                        Scale
+                        <div class="subtitle">Scale</div>
                         <form>
                             <label for="scaleX">x:</label>
                             <input id="scaleX" type="text"></input>
@@ -59,17 +59,6 @@
                 <canvas id="canvas" ></canvas>
             </div>
         </div>
-
-        
-
-        <div id="global-information">
-            Objects:
-            <ul id="object-list">
-            </ul>
-        </div-->
-
-
-
     </body>
         <script type="text/javascript" src="modules/gl-matrix-min.js"></script>
         <script type="text/javascript" src="modules/litegl.js"></script>
