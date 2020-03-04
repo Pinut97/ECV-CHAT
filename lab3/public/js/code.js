@@ -36,7 +36,8 @@ function init()
 
     context3D = GL.create({width: canvas.width-1, height: canvas.height});
     renderer = new RD.Renderer( context3D );
-    renderer.loadShaders("shaders.txt");
+    renderer.loadShaders("shaders/shaders.txt");
+    renderer.setDataFolder("textures");
     var wrapper = document.getElementById('wrapper');
     wrapper.appendChild( renderer.canvas);
     renderer.canvas.style.display = 'none';
