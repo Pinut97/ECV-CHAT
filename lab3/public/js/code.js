@@ -57,7 +57,7 @@ function init()
         scale: [canvas.width, 0, canvas.height],
         color: [1, 1, 1, 1],
         mesh: "planeXZ",
-        texture: "floor.png",
+        texture: "../textures/floor.png",
         tiling: 15,
         shader: "phong_texture"
     });
