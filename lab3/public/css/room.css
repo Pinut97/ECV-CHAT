@@ -60,7 +60,7 @@ html, body {
     background: #555; 
   }
 
-.objectInfo {
+#objectInfo {
     height: auto;
     font-family: sans-serif;
     background-color: #0f4c75;

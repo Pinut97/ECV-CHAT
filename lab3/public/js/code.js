@@ -6,7 +6,7 @@ let lineBtn = document.getElementById('lineBtn');
 let eraseBtn = document.getElementById('eraseBtn');
 let cubeBtn = document.getElementById('cubeBtn');
 
-let inspector = document.getElementById('inspector'); 
+let objectInfo = document.getElementById('objectInfo'); 
 let globalInformation = document.getElementById('global-information');
 
 let numObjects = []; //number of instances of each type of object
@@ -140,8 +140,34 @@ function init()
                 if( selectedTool === 'cube' )
                 {
                     target = ray.collision_point;
-                    create3DCube( target );
+                    createCube( target[0] + canvas.width * 0.5, target[2] + canvas.height * 0.5 ); //convert to 2D coordinates
                     target = null;
+                }
+                else if (selectedTool === 'line')
+                {
+                    target = ray.collision_point;
+                    target[0]+= canvas.width * 0.5;
+                    target[2]+= canvas.height * 0.5;
+
+                    if( mouse.memory.x === 0 && mouse.memory.y === 0 )
+                    {
+                        mouse.memory.x = target[0];
+                        mouse.memory.y = target[2];
+                    }
+                    else
+                    {
+                        drawLine( mouse.memory.x, mouse.memory.y, target[0], target[2] );
+                        let linePosition = {
+                            xo: target[0],
+                            yo: target[2],
+                            xf: mouse.memory.x,
+                            yf: mouse.memory.y
+                        };
+                    objects.push( linePosition );
+                    createWall();
+                    mouse.memory.x = target[0];
+                    mouse.memory.y = target[2];
+                    }
                 }
                 else if( selectedTool === 'select' )
                 {
@@ -153,10 +179,6 @@ function init()
                     else 
                     {
                         objectSelected = null;
-                        inspector.style.display = "none";
-                        inspector.style.visibility = "hidden";
-                        globalInformation.style.display = "block";
-                        globalInformation.style.visibility = "visible";
                     }
                 }
                 else if(selectedTool === 'erase')
@@ -269,10 +291,6 @@ document.getElementById("selectBtn").addEventListener( 'click', function(){
     else{
         selectedTool = null;
         objectSelected = null;
-        inspector.style.display = "none";
-        inspector.style.visibility = "hidden";
-        globalInformation.display = "block";
-        globalInformation.visibility = "visible";
         this.style.border = 'none';
     }
 });
@@ -448,10 +466,6 @@ function selectObject( target )
             {
                 objectSelected = retrieveObjectFromScene(objects[i].id);
                 setInspectorValues();
-                globalInformation.style.display = "none";
-                globalInformation.style.visibility = "hidden";
-                inspector.style.display = "block";
-                inspector.style.visibility = "visible";
                 console.log(objectSelected);
             }
         }
@@ -495,14 +509,14 @@ function normalize( v )
     var aux = {
         x: v.x / vectorLength( v ),
         y: v.y / vectorLength( v )
-    }
+    };
 
     return aux;
 };
 
 function setInspectorValues() 
 {
-    let transform = inspector.querySelectorAll("input");
+    let transform = objectInfo.querySelectorAll("input");
 
     transform[0].setAttribute("value", objectSelected.position[0]);
     transform[1].setAttribute("value", objectSelected.position[1]);
