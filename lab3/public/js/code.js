@@ -10,6 +10,7 @@ let objectInfo = document.getElementById('objectInfo');
 let globalInformation = document.getElementById('global-information');
 
 let numObjects = []; //number of instances of each type of object
+let numbDeletedObjects = [];
 
 let last = performance.now();
 let dt = 0;
@@ -44,6 +45,8 @@ function init()
 
     numObjects[0] = 0;
     numObjects[1] = 0;
+    numbDeletedObjects[0] = 0;
+    numbDeletedObjects[1] = 0;
 
     drawGrid(100);
 
@@ -104,6 +107,7 @@ function init()
                 target = ray.collision_point;
                 target[1] += 25;
                 objectSelected.position = target;
+                setInspectorValues();
             }
         }
     }
@@ -449,6 +453,7 @@ function deleteObject(target)
                 removeObjectFromScene(objects[i].id);
                 deleteObjectFromList(objects[i]);
                 objects.splice(i, 1);
+                numbDeletedObjects[1]++;
             }
         }
     }
@@ -478,6 +483,7 @@ function retrieveObjectFromScene(id)
     {
         if(scene._nodes[i].id === id)
         {
+            console.log(scene._nodes[i]);
             return scene._nodes[i];
         }
     }
@@ -492,6 +498,32 @@ function removeObjectFromScene(id)
             scene.root.children.splice(i, 1);
         }
     }
+};
+
+let el;
+function selectObjectFromList(element)
+{
+    el = element;
+    let type = el.innerText.split("(")[0];
+    let number = parseInt(el.innerText.split("(")[1].split(")")[0]);
+    let aux = 0;
+
+    for(var i = 0; i < objects.length; i++)
+    {
+        if(type === objects[i].type)
+        {
+            aux++;
+        }
+
+        if(aux === number)
+        {
+            console.log(objects[i]);
+            objectSelected = retrieveObjectFromScene(objects[i].id);
+            setInspectorValues();
+            break;
+        }
+    }
+    console.log(objectSelected);
 };
 
 function dot( v1, v2 )
@@ -535,11 +567,16 @@ function setInspectorValues()
 function addObjectToList(object) {
     var ul = document.getElementById("object-list");
     var li = document.createElement("li");
+    
     li.onclick = function(){
-        var text = this.value;
-        console.log(text);
+        selectedTool = 'select';
+        selectBtn.style.border = "solid #0000FF";
+        lineBtn.style.border = 'none';
+        eraseBtn.style.border = 'none';
+        cubeBtn.style.border = "none";
+        selectObjectFromList(li);
     };
-
+    
     if(object.type === "wall")
     {
         li.appendChild(document.createTextNode("wall" + "(" + numObjects[0] + ")")); 
