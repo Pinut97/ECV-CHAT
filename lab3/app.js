@@ -2,6 +2,12 @@ var express = require("express");
 var app = express();
 var bodyParser = require("body-parser");
 
+var http = require('http');
+var WebSocket = require('websocket').server;
+
+const server = http.createServer(app);
+const wss = new WebSocket.Server({ server });
+
 app.use(bodyParser.urlencoded({extended: true}));
 app.set("view engine", "ejs");
 app.use(express.static("public"));
@@ -36,7 +42,15 @@ app.get("/room", function(req, res){
 	res.render("room");
 });
 
-app.listen(3000, function(){
+wss.on('connection', function(request){
+	ws.on('message', function(message){
+		console.log( "message received" );
+	});
+
+	ws.send( "Hi there!" );
+});
+
+server.listen(3000, function(){
 	console.log("Room manager server has started");
 });
 
