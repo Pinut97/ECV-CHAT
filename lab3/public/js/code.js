@@ -84,8 +84,15 @@ function init()
     //draw 3D
     context3D.ondraw = function()
     {
-        renderer.clear( bg_color );
-        renderer.render( scene, camera );
+        if(mode === "2D")
+        {
+            draw2D();
+        }
+        else
+        {
+            renderer.clear( bg_color );
+            renderer.render( scene, camera );
+        }
     }
 
     //mouse 3D actions
@@ -105,8 +112,9 @@ function init()
             if(ray.testPlane( RD.ZERO, RD.UP))
             {
                 target = ray.collision_point;
-                target[1] += 25;
+                target[1] += 24;
                 objectSelected.position = target;
+                getObjectFromObjectList(objectSelected.id).position = target;
                 setInspectorValues();
             }
         }
@@ -144,7 +152,7 @@ function init()
                 if( selectedTool === 'cube' )
                 {
                     target = ray.collision_point;
-                    createCube( target[0] + canvas.width * 0.5, target[2] + canvas.height * 0.5 ); //convert to 2D coordinates
+                    create3DCube( [target[0] + canvas.width * 0.5, target[2] + canvas.height * 0.5] ); //convert to 2D coordinates
                     target = null;
                 }
                 else if (selectedTool === 'line')
@@ -181,7 +189,7 @@ function init()
                         selectObject( target );
                     }
                     else 
-                    {
+                    {   
                         objectSelected = null;
                     }
                 }
@@ -209,6 +217,22 @@ function computeDt()
     var now = performance.now();
     dt = (now - last)/1000;
     last = now;
+};
+
+function draw2D()
+{
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    for(var i = 0; i < objects.length; i++)
+    {
+        if(objects[i].type === "wall")
+        {
+            drawLine(objects[i].origin, objects[i].final);
+        }
+        else if(objects[i].type === "cube")
+        {
+            drawCube( objects[i].position[0] + canvas.width * 0.5, objects[i].position[2] + canvas.height* 0.5 );
+        }
+    }
 };
 
 document.getElementById("canvas").addEventListener( 'mousemove', function( e ){ mouse.move( e )} );
@@ -385,7 +409,9 @@ function createWall()
         id: wall.id,
         position: wall.position,
         rotation: wall.rotation,
-        scaling: wall.scaling
+        scaling: wall.scaling,
+        origin: [aux.xo, aux.yo],
+        final: [aux.xf, aux.yf]
     };
 
     objects.push(wall_object);
@@ -398,6 +424,7 @@ function createWall()
 
 function create3DCube( target )
 {
+    target = [target[0] - canvas.width * 0.5, 0, target[1] - canvas.height * 0.5];
     var cube = new RD.SceneNode( {
         type: "cube",
         id: objectID,
@@ -413,7 +440,7 @@ function create3DCube( target )
         id: cube.id,
         position: cube.position,
         rotation: cube.rotation,
-        scaling: cube.scaling
+        scaling: cube.scaling,
     };
 
     objects.push(cube_object);
@@ -423,7 +450,7 @@ function create3DCube( target )
     addObjectToList(cube_object);
 };
 
-function createCube( x, y )
+function drawCube( x, y )
 {
     context.beginPath();
     context.strokeStyle = "black";
@@ -434,9 +461,17 @@ function createCube( x, y )
     context.lineTo( x - 50, y + 50 );
     context.lineTo( x - 50, y - 50 );
     context.stroke();
+};
 
-    var target = [x - canvas.width * 0.5, 0, y - canvas.height * 0.5];
-    create3DCube( target );
+function getObjectFromObjectList(id)
+{ 
+    for(var i = 0; i < objects.length; i++)
+    {
+        if(id === objects[i].id)
+        {
+            return objects[i];
+        }
+    }
 };
 
 function deleteObject(target)
@@ -631,7 +666,6 @@ class Mouse {
                 }
                 else if ( this.pressed )
                 {
-                    drawLine( this.memory.x, this.memory.y, this.x, this.y );
                     let linePosition = {
                         xo: this.x,
                         yo: this.y,
@@ -646,7 +680,8 @@ class Mouse {
             }
             else if( selectedTool === 'cube' )
             {
-                createCube( this.x, this.y );
+                console.log(this.x + "  " + this.y);
+                create3DCube( [this.x, 0, this.y]);
             }
             this.pressed = "false";
         }
