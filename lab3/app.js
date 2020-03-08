@@ -6,11 +6,11 @@ mongoose.connect("mongodb://localhost/room_manager_app");
 
 var bodyParser = require("body-parser");
 
-var http = require('http');
-var WebSocket = require('websocket').server;
+//var http = require('http');
+//var WebSocket = require('websocket').server;
 
-const server = http.createServer(app);
-const wss = new WebSocket.Server({ server });
+//const server = http.createServer(app);
+//const wss = new WebSocket.Server({ server });
 
 app.use(bodyParser.urlencoded({extended: true}));
 app.set("view engine", "ejs");
@@ -76,7 +76,7 @@ app.get("/rooms/:id", function(req, res){
 		}
 	});
 });
-
+/*
 wss.on('connection', function(request){
 	ws.on('message', function(message){
 		console.log( "message received" );
@@ -84,8 +84,9 @@ wss.on('connection', function(request){
 
 	ws.send( "Hi there!" );
 });
+*/
 
-server.listen(3000, function(){
+app.listen(3000, function(){
 	console.log("Room manager server has started");
 });
 
