@@ -1,30 +1,59 @@
 var express = require("express");
 var app = express();
+
+var mongoose = require("mongoose");
+mongoose.connect("mongodb://localhost/room_manager_app");
+
 var bodyParser = require("body-parser");
 
 app.use(bodyParser.urlencoded({extended: true}));
 app.set("view engine", "ejs");
 app.use(express.static("public"));
 
+var objectSchema = new mongoose.Schema({
+	type: String,
+	id: Number,
+	position: [Number],
+	rotation: [Number],
+	scaling: [Number],
+});
+
+var roomSchema = new mongoose.Schema({
+	name: String,
+	description: String,
+	objects: [objectSchema]
+});
+
+var Room = mongoose.model("Room", roomSchema);
+
+
 app.get("/", function(req, res){
 	res.render("landing");
 });
 
-var rooms = [
-	{name: "room1", description: "buah brother vaya pedazo de habitación jiji"},
-	{name: "room2", description: "Segona avitasió juju"},
-	{name: "room3", description: "Tercera habitació de la llista"}
-	]
-
 app.get("/rooms", function(req, res){
-	res.render("rooms", {rooms:rooms});
+	Room.find({}, function(err, allRooms){
+		if(err){
+			console.log(err)
+		} else {
+			console.log(allRooms);
+			res.render("rooms", {rooms:allRooms});
+		}
+	});
 });
 
 app.post("/rooms", function(req, res){
-	var name = req.body.name;
-	var description = req.body.description;
-	var newRoom = {name: name, description: description};
-	rooms.push(newRoom);
+	Room.create({
+		name: req.body.name,
+		description: req.body.description
+	},function(err, room){
+		if(err){
+			console.log(error);
+		} else {
+			console.log(room);
+		}
+	});
+
 	res.redirect("/rooms");
 });
 
@@ -32,8 +61,14 @@ app.get("/rooms/new", function(req, res){
 	res.render("new.ejs");
 });
 
-app.get("/room", function(req, res){
-	res.render("room");
+app.get("/rooms/:id", function(req, res){
+	Room.findById(req.params.id, function(err, foundRoom){
+		if(err){
+			console.log(err)
+		} else {
+			res.render("room", {room: foundRoom});
+		}
+	});
 });
 
 app.listen(3000, function(){

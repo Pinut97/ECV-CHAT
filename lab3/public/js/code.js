@@ -37,8 +37,8 @@ function init()
 
     context3D = GL.create({width: canvas.width-1, height: canvas.height});
     renderer = new RD.Renderer( context3D );
-    renderer.loadShaders("shaders/shaders.txt");
-    renderer.setDataFolder("textures");
+    renderer.loadShaders("/shaders/shaders.txt");
+    //renderer.setDataFolder("textures");
     var wrapper = document.getElementById('wrapper');
     wrapper.appendChild( renderer.canvas);
     renderer.canvas.style.display = 'none';
@@ -61,7 +61,7 @@ function init()
         scale: [canvas.width, 0, canvas.height],
         color: [1, 1, 1, 1],
         mesh: "planeXZ",
-        texture: "../textures/floor.png",
+        texture: "/textures/floor.png",
         tiling: 15,
         shader: "phong_texture"
     });
@@ -168,17 +168,9 @@ function init()
                     }
                     else
                     {
-                        drawLine( mouse.memory.x, mouse.memory.y, target[0], target[2] );
-                        let linePosition = {
-                            xo: target[0],
-                            yo: target[2],
-                            xf: mouse.memory.x,
-                            yf: mouse.memory.y
-                        };
-                    objects.push( linePosition );
-                    createWall();
-                    mouse.memory.x = target[0];
-                    mouse.memory.y = target[2];
+                        createWall({x: target[0], y: target[2]}, {x: mouse.memory.x, y: mouse.memory.y});
+                        mouse.memory.x = target[0];
+                        mouse.memory.y = target[2];
                     }
                 }
                 else if( selectedTool === 'select' )
@@ -356,32 +348,33 @@ function drawGrid( size )
     context.stroke();
 };
 
-function drawLine (xo, yo, xf, yf )
+function drawLine (origin, final )
 {
     context.beginPath();
     context.strokeStyle = "black";
     context.lineWidth = 5;
-    context.moveTo( xo, yo );
-    context.lineTo( xf, yf );
+    context.moveTo( origin.x, origin.y );
+    context.lineTo( final.x, final.y );
     context.stroke();
 };
 
-function createWall()
+function createWall(origin, final)
 {
-    var aux = objects[objects.length - 1];
+    console.log(origin);
+    console.log(final);
     //vector between the two points
     var vector = {
-        x: aux.xf - aux.xo,
-        y: aux.yf - aux.yo
+        x: final.x - origin.x,
+        y: final.y - origin.y
     }
 
     //save the position where wall is gonna create
     var middlePoint = {
-        x: aux.xo + ( vector.x * 0.5 ), 
-        y: aux.yo + ( vector.y * 0.5 )
+        x: origin.x + ( vector.x * 0.5 ), 
+        y: origin.y + ( vector.y * 0.5 )
     }
 
-    if( aux.yf > aux.yo ) 
+    if( final.y > origin.y ) 
     {
         vector.y = -vector.y;
         vector.x = -vector.x;
@@ -410,8 +403,8 @@ function createWall()
         position: wall.position,
         rotation: wall.rotation,
         scaling: wall.scaling,
-        origin: [aux.xo, aux.yo],
-        final: [aux.xf, aux.yf]
+        origin: origin,
+        final: final
     };
 
     objects.push(wall_object);
@@ -440,7 +433,7 @@ function create3DCube( target )
         id: cube.id,
         position: cube.position,
         rotation: cube.rotation,
-        scaling: cube.scaling,
+        scaling: cube.scaling
     };
 
     objects.push(cube_object);
@@ -535,12 +528,10 @@ function removeObjectFromScene(id)
     }
 };
 
-let el;
 function selectObjectFromList(element)
 {
-    el = element;
-    let type = el.innerText.split("(")[0];
-    let number = parseInt(el.innerText.split("(")[1].split(")")[0]);
+    let type = element.innerText.split("(")[0];
+    let number = parseInt(element.innerText.split("(")[1].split(")")[0]);
     let aux = 0;
 
     for(var i = 0; i < objects.length; i++)
@@ -666,22 +657,14 @@ class Mouse {
                 }
                 else if ( this.pressed )
                 {
-                    let linePosition = {
-                        xo: this.x,
-                        yo: this.y,
-                        xf: this.memory.x,
-                        yf: this.memory.y
-                    }
-                    objects.push( linePosition );
-                    createWall();
+                    createWall({x: this.x, y: this.y}, {x: this.memory.x, y: this.memory.y});
                     this.memory.x = this.x;
                     this.memory.y = this.y;
                 }
             }
             else if( selectedTool === 'cube' )
             {
-                console.log(this.x + "  " + this.y);
-                create3DCube( [this.x, 0, this.y]);
+                create3DCube( [this.x, this.y]);
             }
             this.pressed = "false";
         }
