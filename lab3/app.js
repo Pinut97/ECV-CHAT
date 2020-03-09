@@ -1,8 +1,8 @@
 var express = require("express");
 var app = express();
 
-var mongoose = require("mongoose");
-mongoose.connect("mongodb://localhost/room_manager_app");
+//var mongoose = require("mongoose");
+//mongoose.connect("mongodb://localhost/room_manager_app");
 
 var bodyParser = require("body-parser");
 
@@ -15,7 +15,7 @@ var bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({extended: true}));
 app.set("view engine", "ejs");
 app.use(express.static("public"));
-
+/*
 var objectSchema = new mongoose.Schema({
 	type: String,
 	id: Number,
@@ -31,7 +31,7 @@ var roomSchema = new mongoose.Schema({
 });
 
 var Room = mongoose.model("Room", roomSchema);
-
+*/
 
 app.get("/", function(req, res){
 	res.render("landing");
