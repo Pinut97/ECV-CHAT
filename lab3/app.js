@@ -5,8 +5,8 @@ const http = require('http');
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
-//var mongoose = require("mongoose");
-//mongoose.connect("mongodb://localhost/room_manager_app");
+var mongoose = require("mongoose");
+mongoose.connect("mongodb://localhost/room_manager_app");
 
 var bodyParser = require("body-parser");
 

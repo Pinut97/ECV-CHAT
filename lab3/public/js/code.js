@@ -53,8 +53,6 @@ function init()
     numbDeletedObjects[0] = 0;
     numbDeletedObjects[1] = 0;
 
-    drawGrid(100);
-
     camera = new RD.Camera();
     camera.perspective( 60, gl.canvas.width / gl.canvas.height, 1, 10000 );
     camera.lookAt( [0, 1000, 500], [0,0,0], [0,1,0] );
@@ -229,11 +227,9 @@ function connect()
     };
 
     connection.onmessage = function(msg){
-    	console.log(msg);
     	if(msg.type === "initial_objects")
     	{
-    		console.log("JIJI");
-    		console.log(msg);
+    		console.log(msg.data);
     	}
     };
 };
@@ -252,6 +248,7 @@ function computeDt()
 function draw2D()
 {
     context.clearRect(0, 0, canvas.width, canvas.height);
+    drawGrid(100);
     for(var i = 0; i < objects.length; i++)
     {
         if(objects[i].type === "wall")
