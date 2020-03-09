@@ -6,6 +6,8 @@ let lineBtn = document.getElementById('lineBtn');
 let eraseBtn = document.getElementById('eraseBtn');
 let cubeBtn = document.getElementById('cubeBtn');
 
+let roomName = document.getElementById('file').innerText;
+console.log(roomName);
 let objectInfo = document.getElementById('objectInfo'); 
 let globalInformation = document.getElementById('global-information');
 
@@ -24,8 +26,11 @@ context = canvas.getContext( "2d" );
 
 let objects = [];
 
+let connection;
+
 function init()
 {
+    connect();
     canvas.height = canvas.parentNode.getBoundingClientRect().height;
     canvas.width = canvas.parentNode.getBoundingClientRect().width;
 
@@ -200,6 +205,39 @@ function init()
     context3D.animate();
 };
 
+/*
+function initialObjects()
+{
+	for(var i = 0; i < )
+}
+*/
+
+function connect()
+{
+    connection = new WebSocket('ws://127.0.0.1:9022');
+    console.log("Se conecta broder");
+
+    connection.onopen = () => {
+        connection.send(JSON.stringify("Message from client"));
+
+        var room_name = {
+        	type: "room_name",
+        	room_name: roomName
+        };
+
+        connection.send(JSON.stringify(room_name));
+    };
+
+    connection.onmessage = function(msg){
+    	console.log(msg);
+    	if(msg.type === "initial_objects")
+    	{
+    		console.log("JIJI");
+    		console.log(msg);
+    	}
+    };
+};
+
 window.addEventListener( 'load', init, false );
 
 
@@ -360,8 +398,6 @@ function drawLine (origin, final )
 
 function createWall(origin, final)
 {
-    console.log(origin);
-    console.log(final);
     //vector between the two points
     var vector = {
         x: final.x - origin.x,
@@ -413,6 +449,13 @@ function createWall(origin, final)
     wall.rotate( angleInRad, RD.UP, false );
     scene.root.addChild( wall );
     addObjectToList(wall_object);
+
+    var wall_message = {
+    	type: "new_object",
+    	data: wall_object
+    };
+
+    connection.send(JSON.stringify(wall_object));
 };
 
 function create3DCube( target )
@@ -441,6 +484,13 @@ function create3DCube( target )
     objectID++;
     scene.root.addChild( cube );
     addObjectToList(cube_object);
+
+    var cube_message = {
+    	type: "new_object",
+    	data: cube_object
+    };
+
+    connection.send(JSON.stringify(cube_message));
 };
 
 function drawCube( x, y )

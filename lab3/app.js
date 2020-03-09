@@ -1,21 +1,21 @@
-var express = require("express");
-var app = express();
+const express = require("express");
+const app = express();
+const WebSocket = require("ws");
+const http = require('http');
+const server = http.createServer(app);
+const wss = new WebSocket.Server({ server });
 
 //var mongoose = require("mongoose");
 //mongoose.connect("mongodb://localhost/room_manager_app");
 
 var bodyParser = require("body-parser");
 
-//var http = require('http');
-//var WebSocket = require('websocket').server;
-
-//const server = http.createServer(app);
-//const wss = new WebSocket.Server({ server });
-
 app.use(bodyParser.urlencoded({extended: true}));
 app.set("view engine", "ejs");
 app.use(express.static("public"));
-/*
+
+var objects  = [];
+
 var objectSchema = new mongoose.Schema({
 	type: String,
 	id: Number,
@@ -31,7 +31,6 @@ var roomSchema = new mongoose.Schema({
 });
 
 var Room = mongoose.model("Room", roomSchema);
-*/
 
 app.get("/", function(req, res){
 	res.render("landing");
@@ -42,7 +41,6 @@ app.get("/rooms", function(req, res){
 		if(err){
 			console.log(err)
 		} else {
-			console.log(allRooms);
 			res.render("rooms", {rooms:allRooms});
 		}
 	});
@@ -76,17 +74,73 @@ app.get("/rooms/:id", function(req, res){
 		}
 	});
 });
-/*
-wss.on('connection', function(request){
-	ws.on('message', function(message){
-		console.log( "message received" );
+
+wss.on("connection", function(ws){
+	ws.send(JSON.stringify("Message from Server"));
+
+	var room_name;
+
+	ws.on("message", function(msg){
+		var msg = JSON.parse(msg);
+
+		if(msg.type === "room_name")
+		{
+			room_name = msg.room_name;
+			Room.find({name: room_name}, {_id: 0, objects: 1}, function(err, room_objects){
+				if(err){
+					console.log(err)
+				} else {
+					console.log(room_objects);
+
+					var message = {
+						type: "initial_objects",
+						data: room_objects
+					};
+
+					ws.send(JSON.stringify(message));
+				}
+			});
+		}
+		else if(msg.type === "new_object")
+		{
+			var element = {
+				room_name: room_name,
+				data: msg.data
+			};
+
+			objects.push(element);
+			console.log(element);
+		}
 	});
 
-	ws.send( "Hi there!" );
-});
-*/
-
-app.listen(3000, function(){
-	console.log("Room manager server has started");
+	ws.on("close", function(connection){
+		console.log("Client left");
+		updateRoomInfoDB(room_name);
+	});
 });
 
+server.listen(9022, function(){
+	console.log("Server Started!");
+});
+
+function updateRoomInfoDB(room_name)
+{
+	var room_objects = [];
+
+	for(var i = 0; i < objects.length; i++)
+	{
+		if(objects[i].room_name === room_name)
+		{
+			room_objects.push(objects[i].data);
+		}
+	}
+
+	console.log(room_objects);
+	Room.update({}, {$set: {objects: room_objects}}, function(err, room){
+		if(err){
+			console.log(err);
+		} else {
+			console.log(room);
+		}
+	});
+};
