@@ -1,31 +1,20 @@
 const express = require("express");
-const enableWs = require("express-ws");
-
 const app = express();
-enableWs(app);
+const WebSocket = require("ws");
+const http = require('http');
+const server = http.createServer(app);
+const wss = new WebSocket.Server({ server });
 
 var mongoose = require("mongoose");
 mongoose.connect("mongodb://localhost/room_manager_app");
 
 var bodyParser = require("body-parser");
 
-//var http = require('http');
-/*
-var WebSocketServer = require("ws").Server,
-    express = require("express"),
-    http = require("http"),
-    app = express(),
-    server = http.createServer(app);
-*/
-
-//const app = express();
-
-//const server = http.createServer(app);
-//const wss = new WebSocketServer({ server: server });
-
 app.use(bodyParser.urlencoded({extended: true}));
 app.set("view engine", "ejs");
 app.use(express.static("public"));
+
+var objects  = [];
 
 var objectSchema = new mongoose.Schema({
 	type: String,
@@ -87,23 +76,58 @@ app.get("/rooms/:id", function(req, res){
 	});
 });
 
-var clients = [];
+wss.on("connection", function(ws){
+	ws.send(JSON.stringify("Message from Server"));
 
-app.ws("/rooms/:id", function(ws, req){
-	ws.on("request", function(request){
-		console.log("entra");
-	});
+	var room_name;
 
 	ws.on("message", function(msg){
-		console.log("Receive message");
-		ws.send(msg)
+		var msg = JSON.parse(msg);
+
+		if(msg.type === "room_name")
+		{
+			room_name = msg.room_name;
+		}
+		else if(msg.type === "new_object")
+		{
+			var element = {
+				room_name: room_name,
+				data: msg.data
+			};
+
+			objects.push(element);
+			console.log(element);
+		}
 	});
 
-	ws.on("close", function(){
-		console.log("WebSocket was closed");
+	ws.on("close", function(connection){
+		console.log("Client left");
+		updateRoomInfoDB(room_name);
 	});
 });
 
-app.listen(9022, function(){
+server.listen(9022, function(){
 	console.log("Server Started!");
 });
+
+function updateRoomInfoDB(room_name)
+{
+	var room_objects = [];
+
+	for(var i = 0; i < objects.length; i++)
+	{
+		if(objects[i].room_name === room_name)
+		{
+			room_objects.push(objects[i].data);
+		}
+	}
+
+	console.log(room_objects);
+	Room.update({}, {$set: {objects: room_objects}}, function(err, room){
+		if(err){
+			console.log(err);
+		} else {
+			console.log(room);
+		}
+	});
+};
