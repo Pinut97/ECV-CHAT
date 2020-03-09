@@ -269,26 +269,6 @@ function drawWall( xo, yo, xf, yf)
     context.stroke();
 };
 
-<<<<<<< HEAD
-function draw()
-{
-    clear();
-
-    //drawGrid(60);
-    for( var i = 0; i < wallsPosition.length; i++ )
-    {
-        drawLine( wallsPosition[i].xo, wallsPosition[i].yo, wallsPosition[i].xf, wallsPosition[i].yf );
-    }
-};
-
-function clear()
-{
-    context.fillStyle = "white";
-    context.clearRect( 0, 0, canvas.width, canvas.height );
-};
-
-=======
->>>>>>> e8b95b096654e0b819267028df33b94294b29bbd
 //draw background grid
 function drawGrid( size )
 {
@@ -348,13 +328,7 @@ function createWall()
     var auxiliarVector = { x: 1, y: 0}
     
     var dotProduct = dot( normalized, auxiliarVector );
-<<<<<<< HEAD
-    var angleInRads = Math.acos( dotProduct );
-
-    var scaleX = Math.trunc(vectorLength(vector))
-=======
     var angleInRad = Math.acos( dotProduct );
->>>>>>> e8b95b096654e0b819267028df33b94294b29bbd
 
     var wall = new RD.SceneNode({
         type: "wall",
@@ -366,19 +340,6 @@ function createWall()
         texture: "none",
         shader: "phong_texture"
     });
-<<<<<<< HEAD
-/*
-    var wall = new RD.SceneNode({
-        position: [-50,10,10],
-        scaling: 30,
-        color: [1, 0.5, 1, 1],
-        mesh: "plane",
-        shader: "phong_texture"
-    });
-*/
-    var angleInDegrees = (angleInRads * 180) / Math.PI;
-    wall.rotate( angleInRads, RD.UP, false );
-=======
 
     var wall_object = {
         type: "wall",
@@ -391,7 +352,6 @@ function createWall()
     objects.push(wall_object);
     objectID++;
     wall.rotate( angleInRad, RD.UP, false );
->>>>>>> e8b95b096654e0b819267028df33b94294b29bbd
     scene.root.addChild( wall );
 };
 

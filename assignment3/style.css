@@ -24,14 +24,14 @@ body {
 }
 
 #inspector {
-    background-color: rgb(200, 200, 200);
+    background-color: rgb(75, 51, 119);
     width: 25%;
     float: left;
     margin-left: 20px;
     padding-left: 5px;
     padding-top: 10px;
     padding-bottom: 10px;
-    height: 50%;
+    height: 50em;
     visibility: hidden;
 }
 
