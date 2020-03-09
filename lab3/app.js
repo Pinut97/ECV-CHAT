@@ -87,6 +87,20 @@ wss.on("connection", function(ws){
 		if(msg.type === "room_name")
 		{
 			room_name = msg.room_name;
+			Room.find({name: room_name}, {_id: 0, objects: 1}, function(err, room_objects){
+				if(err){
+					console.log(err)
+				} else {
+					console.log(room_objects);
+
+					var message = {
+						type: "initial_objects",
+						data: room_objects
+					};
+
+					ws.send(JSON.stringify(message));
+				}
+			});
 		}
 		else if(msg.type === "new_object")
 		{

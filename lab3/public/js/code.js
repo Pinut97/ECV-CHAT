@@ -229,10 +229,10 @@ function connect()
     };
 
     connection.onmessage = function(msg){
-    	
-    	var msg = JSON.parse(msg);
+    	console.log(msg);
     	if(msg.type === "initial_objects")
     	{
+    		console.log("JIJI");
     		console.log(msg);
     	}
     };
