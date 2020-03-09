@@ -1,5 +1,8 @@
-var express = require("express");
-var app = express();
+const express = require("express");
+const enableWs = require("express-ws");
+
+const app = express();
+enableWs(app);
 
 var mongoose = require("mongoose");
 mongoose.connect("mongodb://localhost/room_manager_app");
@@ -7,10 +10,18 @@ mongoose.connect("mongodb://localhost/room_manager_app");
 var bodyParser = require("body-parser");
 
 //var http = require('http');
-//var WebSocket = require('websocket').server;
+/*
+var WebSocketServer = require("ws").Server,
+    express = require("express"),
+    http = require("http"),
+    app = express(),
+    server = http.createServer(app);
+*/
+
+//const app = express();
 
 //const server = http.createServer(app);
-//const wss = new WebSocket.Server({ server });
+//const wss = new WebSocketServer({ server: server });
 
 app.use(bodyParser.urlencoded({extended: true}));
 app.set("view engine", "ejs");
@@ -42,7 +53,6 @@ app.get("/rooms", function(req, res){
 		if(err){
 			console.log(err)
 		} else {
-			console.log(allRooms);
 			res.render("rooms", {rooms:allRooms});
 		}
 	});
@@ -76,17 +86,24 @@ app.get("/rooms/:id", function(req, res){
 		}
 	});
 });
-/*
-wss.on('connection', function(request){
-	ws.on('message', function(message){
-		console.log( "message received" );
+
+var clients = [];
+
+app.ws("/rooms/:id", function(ws, req){
+	ws.on("request", function(request){
+		console.log("entra");
 	});
 
-	ws.send( "Hi there!" );
-});
-*/
+	ws.on("message", function(msg){
+		console.log("Receive message");
+		ws.send(msg)
+	});
 
-app.listen(3000, function(){
-	console.log("Room manager server has started");
+	ws.on("close", function(){
+		console.log("WebSocket was closed");
+	});
 });
 
+app.listen(9022, function(){
+	console.log("Server Started!");
+});

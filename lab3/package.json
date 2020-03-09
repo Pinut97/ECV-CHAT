@@ -12,10 +12,9 @@
     "body-parser": "^1.19.0",
     "ejs": "^3.0.1",
     "express": "^4.17.1",
-<<<<<<< HEAD
-    "mongoose": "^5.9.3"
-=======
-    "websocket": "^1.0.31"
->>>>>>> cea638805af7cc7d136d4268670be3313eb86362
+    "express-ws": "^4.0.0",
+    "mongoose": "^5.9.3",
+    "websocket": "^1.0.31",
+    "ws": "^7.2.2"
   }
 }

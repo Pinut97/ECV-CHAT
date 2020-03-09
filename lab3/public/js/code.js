@@ -26,6 +26,7 @@ let objects = [];
 
 function init()
 {
+    connect();
     canvas.height = canvas.parentNode.getBoundingClientRect().height;
     canvas.width = canvas.parentNode.getBoundingClientRect().width;
 
@@ -199,6 +200,16 @@ function init()
     //call for 3d loop
     context3D.animate();
 };
+
+function connect()
+{
+    connection = new WebSocket('ws://127.0.0.1:9022');
+    console.log("Se conecta broder");
+
+    connection.onopen = () => {
+        connection.send("Message From Client");
+    };
+}
 
 window.addEventListener( 'load', init, false );
 
