@@ -227,9 +227,12 @@ function connect()
     };
 
     connection.onmessage = function(msg){
-    	if(msg.type === "initial_objects")
+        var message = JSON.parse(msg.data);
+    	if(message.type === "initial_objects")
     	{
-    		console.log(msg.data);
+            console.log("parsed");
+            console.log(message.data);
+            
     	}
     };
 };
