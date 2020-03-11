@@ -1,0 +1,18 @@
+<%- include("partials/header")%>
+
+<h1>This is the rooms page</h1>
+
+<a href="/rooms/new">Add New Room</a>
+
+<% rooms.forEach(function(room){ %>
+	<div class="card" style="width: 18rem;">
+		<img src="https://media.gettyimages.com/photos/laptop-on-coffee-table-in-a-modern-living-room-of-an-old-country-picture-id900217718?s=612x612" alt="room image">
+		<div class="card-body">
+			<h4 class="card-title"><%= room.name %></h4>
+			<p class="card-text"><%= room.description %></p>
+			<a href="/rooms/<%= room._id %>" class="btn btn-primary">Open Room</a>
+		</div>
+	</div>
+<%});%>
+
+<%- include("partials/footer")%>
