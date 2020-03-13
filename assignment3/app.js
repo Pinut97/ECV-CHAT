@@ -126,15 +126,13 @@ server.listen(9022, function(){
 function updateRoomInfoDB(room_name, addedRoomObjects)
 {
 
-	console.log("EL MIERDAS!!!!!!!!!!!!!!!!" + addedRoomObjects[0].data);
-
 	Room.findOne({name: room_name}, function(err, foundRoom){
 		if(err){
 			console.log(err);
 		} else {
 			for(var i = 0; i < addedRoomObjects.length; i++)
 			{
-				foundRoom.objects.push(addedRoomObjects[i]);
+				foundRoom.objects.push(addedRoomObjects[i].data);
 			}
 			foundRoom.save(function(err, savedRoom){
 				if(err){

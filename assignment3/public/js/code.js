@@ -83,6 +83,7 @@ function init()
     {
         computeDt();
         scene.update(dt);
+        document.getElementsById('translateX').value;
     }
     //draw 3D
     context3D.ondraw = function()
@@ -664,7 +665,19 @@ function setInspectorValues()
     transform[7].setAttribute("value", objectSelected.scaling[1]);
     transform[8].setAttribute("value", objectSelected.scaling[2]);
 
-}; 
+};
+
+//change object values from inspector
+function changeInspectorValues( )
+{
+    if( objectSelected != null)
+    {
+        //objectSelected.position[0]
+        var a = document.getElementById('translateX');
+        document.getElement
+        console.log(a);
+    }
+};
 
 function addObjectToList(object) {
     var ul = document.getElementById("object-list");
