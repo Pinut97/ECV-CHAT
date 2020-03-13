@@ -41,6 +41,7 @@ app.get("/rooms", function(req, res){
 		if(err){
 			console.log(err)
 		} else {
+			console.log("las rooms: " + allRooms);
 			res.render("rooms", {rooms:allRooms});
 		}
 	});
@@ -54,7 +55,7 @@ app.post("/rooms", function(req, res){
 		if(err){
 			console.log(error);
 		} else {
-			console.log(room);
+			console.log("room posted: " + room);
 		}
 	});
 
@@ -79,6 +80,7 @@ wss.on("connection", function(ws){
 	ws.send(JSON.stringify("Message from Server"));
 
 	var room_name;
+	var addedRoomObjects = [];
 
 	ws.on("message", function(msg){
 		var msg = JSON.parse(msg);
@@ -90,6 +92,7 @@ wss.on("connection", function(ws){
 				if(err){
 					console.log(err)
 				} else {
+					console.log(room_name);
 					console.log(room_objects);
 
 					var message = {
@@ -108,14 +111,14 @@ wss.on("connection", function(ws){
 				data: msg.data
 			};
 
-			objects.push(element);
+			addedRoomObjects.push(element);
 			console.log(element);
 		}
 	});
 
 	ws.on("close", function(connection){
 		console.log("Client left");
-		updateRoomInfoDB(room_name);
+		updateRoomInfoDB(room_name, addedRoomObjects);
 	});
 });
 
@@ -123,24 +126,38 @@ server.listen(9022, function(){
 	console.log("Server Started!");
 });
 
-function updateRoomInfoDB(room_name)
+function updateRoomInfoDB(room_name, addedRoomObjects)
 {
-	var room_objects = [];
 
-	for(var i = 0; i < objects.length; i++)
-	{
-		if(objects[i].room_name === room_name)
-		{
-			room_objects.push(objects[i].data);
+	Room.findOne({name: room_name}, function(err, foundRoom){
+		if(err){
+			console.log(err);
+		} else {
+			console.log(foundRoom);
+			console.log("The ID: " + foundRoom._id);
+			for(var i = 0; i < addedRoomObjects.length; i++)
+			{
+				foundRoom.objects.push(addedRoomObjects[i]);
+			}
+			console.log("Object array: " + foundRoom.objects);
+			foundRoom.save(function(err, savedRoom){
+				if(err){
+					console.log(err)
+				} else {
+					console.log(savedRoom);
+				}
+			});
 		}
-	}
+	});
 
-	console.log(room_objects);
-	Room.update({}, {$set: {objects: room_objects}}, function(err, room){
+/*
+	console.log("Objects to send to room: " + room_objects);
+	Room.updateOne({name: room_name}, {$addFields: {objects: room_objects}}, function(err, room){
 		if(err){
 			console.log(err);
 		} else {
 			console.log(room);
 		}
 	});
+*/
 };

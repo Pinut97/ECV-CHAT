@@ -155,7 +155,7 @@ function init()
                 if( selectedTool === 'cube' )
                 {
                     target = ray.collision_point;
-                    create3DCube( [target[0] + canvas.width * 0.5, target[2] + canvas.height * 0.5] ); //convert to 2D coordinates
+                    create3DCube( [target[0] + canvas.width * 0.5, target[2] + canvas.height * 0.5], true ); //convert to 2D coordinates
                     target = null;
                 }
                 else if (selectedTool === 'line')
@@ -171,7 +171,7 @@ function init()
                     }
                     else
                     {
-                        createWall({x: target[0], y: target[2]}, {x: mouse.memory.x, y: mouse.memory.y});
+                        createWall({x: target[0], y: target[2]}, {x: mouse.memory.x, y: mouse.memory.y}, true);
                         mouse.memory.x = target[0];
                         mouse.memory.y = target[2];
                     }
@@ -203,12 +203,25 @@ function init()
     context3D.animate();
 };
 
-/*
-function initialObjects()
+
+function generateInitialObjects(initialObjects)
 {
-	for(var i = 0; i < )
+	console.log("recibo esto: " + initialObjects);
+	for(var i = 0; i < initialObjects.length; i++)
+	{
+		console.log(initialObjects[i].type);
+		console.log(initialObjects[i].position);
+		if(initialObjects[i].type === "wall")
+		{
+			createWall(initialObjects[i].origin, initialObjects[i].final, false);
+		}
+		else if (initialObjects[i].type === "cube")
+		{
+			create3DCube(initialObjects[i].position, false);
+		}
+	}
 }
-*/
+
 
 function connect()
 {
@@ -232,7 +245,8 @@ function connect()
     	{
             console.log("parsed");
             console.log(message.data);
-            
+            console.log(message.data[0].objects);
+            generateInitialObjects(message.data[0].objects);            
     	}
     };
 };
@@ -396,7 +410,7 @@ function drawLine (origin, final )
     context.stroke();
 };
 
-function createWall(origin, final)
+function createWall(origin, final, addToDB)
 {
     //vector between the two points
     var vector = {
@@ -448,23 +462,32 @@ function createWall(origin, final)
     objectID++;
     wall.rotate( angleInRad, RD.UP, false );
     scene.root.addChild( wall );
-    addObjectToList(wall_object);
+    
 
     var wall_message = {
     	type: "new_object",
     	data: wall_object
     };
 
-    connection.send(JSON.stringify(wall_object));
+    if(addToDB === true)
+    {
+    	addObjectToList(wall_object);
+    	connection.send(JSON.stringify(wall_object));
+    }
+    
 };
 
-function create3DCube( target )
+function create3DCube( target, addToDB )
 {
-    target = [target[0] - canvas.width * 0.5, 0, target[1] - canvas.height * 0.5];
+	if(addToDB)
+	{
+		target = [target[0] - canvas.width * 0.5, 24, target[1] - canvas.height * 0.5];
+	}
+    
     var cube = new RD.SceneNode( {
         type: "cube",
         id: objectID,
-        position: [target[0], 24, target[2]],
+        position: target,
         scaling: [100, 50, 100],
         color: [0.9, 0.9, 0.7, 1],
         mesh: "cube",
@@ -483,14 +506,20 @@ function create3DCube( target )
     numObjects[1]++;
     objectID++;
     scene.root.addChild( cube );
-    addObjectToList(cube_object);
+    
 
     var cube_message = {
     	type: "new_object",
     	data: cube_object
     };
 
-    connection.send(JSON.stringify(cube_message));
+	addObjectToList(cube_object);
+	
+    if(addToDB === true)
+    {	
+    	connection.send(JSON.stringify(cube_message));
+    }
+    
 };
 
 function drawCube( x, y )
@@ -707,14 +736,14 @@ class Mouse {
                 }
                 else if ( this.pressed )
                 {
-                    createWall({x: this.x, y: this.y}, {x: this.memory.x, y: this.memory.y});
+                    createWall({x: this.x, y: this.y}, {x: this.memory.x, y: this.memory.y}, true);
                     this.memory.x = this.x;
                     this.memory.y = this.y;
                 }
             }
             else if( selectedTool === 'cube' )
             {
-                create3DCube( [this.x, this.y]);
+                create3DCube( [this.x, this.y], true);
             }
             this.pressed = "false";
         }
