@@ -41,7 +41,6 @@ app.get("/rooms", function(req, res){
 		if(err){
 			console.log(err)
 		} else {
-			console.log("las rooms: " + allRooms);
 			res.render("rooms", {rooms:allRooms});
 		}
 	});
@@ -84,7 +83,6 @@ wss.on("connection", function(ws){
 
 	ws.on("message", function(msg){
 		var msg = JSON.parse(msg);
-
 		if(msg.type === "room_name")
 		{
 			room_name = msg.room_name;
@@ -92,8 +90,6 @@ wss.on("connection", function(ws){
 				if(err){
 					console.log(err)
 				} else {
-					console.log(room_name);
-					console.log(room_objects);
 
 					var message = {
 						type: "initial_objects",
@@ -106,13 +102,14 @@ wss.on("connection", function(ws){
 		}
 		else if(msg.type === "new_object")
 		{
+			//console.log(msg.data);
 			var element = {
 				room_name: room_name,
 				data: msg.data
 			};
 
 			addedRoomObjects.push(element);
-			console.log(element);
+			//console.log(addedRoomObjects);
 		}
 	});
 
@@ -129,17 +126,16 @@ server.listen(9022, function(){
 function updateRoomInfoDB(room_name, addedRoomObjects)
 {
 
+	console.log("EL MIERDAS!!!!!!!!!!!!!!!!" + addedRoomObjects[0].data);
+
 	Room.findOne({name: room_name}, function(err, foundRoom){
 		if(err){
 			console.log(err);
 		} else {
-			console.log(foundRoom);
-			console.log("The ID: " + foundRoom._id);
 			for(var i = 0; i < addedRoomObjects.length; i++)
 			{
 				foundRoom.objects.push(addedRoomObjects[i]);
 			}
-			console.log("Object array: " + foundRoom.objects);
 			foundRoom.save(function(err, savedRoom){
 				if(err){
 					console.log(err)

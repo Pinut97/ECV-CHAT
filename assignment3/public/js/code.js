@@ -137,10 +137,6 @@ function init()
             console.log( "w button" );
             //camera.position = vec3.scale( camera.position, camera.position, camera.position + 10 );
         }
-        if( e.key === 87)
-        {
-            console.log("JIJIJI");
-        }
     }
 
     var target = null;
@@ -204,7 +200,7 @@ function init()
 };
 
 
-function generateInitialObjects(initialObjects)
+function generateInitialObjects( initialObjects )
 {
 	console.log("recibo esto: " + initialObjects);
 	for(var i = 0; i < initialObjects.length; i++)
@@ -241,6 +237,7 @@ function connect()
 
     connection.onmessage = function(msg){
         var message = JSON.parse(msg.data);
+        console.log(message);
     	if(message.type === "initial_objects")
     	{
             console.log("parsed");
