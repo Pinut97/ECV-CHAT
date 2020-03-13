@@ -1,0 +1,44 @@
+
+.options-bar {
+    padding: 0;
+    background-color: #555;
+    color: white;
+    overflow: auto;
+    width: auto;
+}
+
+.container{
+    margin-top: 1em;
+}
+
+.options-bar a {
+    float: left;
+    padding: 0.5em;
+    font-size: 2em;
+    transition: all 0.3s ease;
+}
+
+.options-bar a:hover {
+    overflow: hidden;
+    width: auto;
+    background-color: #000;
+    color: white;
+    text-decoration: none;
+}
+
+.active {
+    float: left;
+    padding: 0.5em;
+    font-size: 2em;
+    background-color: #4CAF50;
+}
+.row {
+    display: flex;
+    flex-wrap: wrap;
+ }
+ 
+ .row > div[class*='col-'] {
+   display: flex;
+ }
+ 
+

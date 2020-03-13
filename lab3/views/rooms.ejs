@@ -1,19 +1,24 @@
 <%- include("partials/header")%>
 
+<div class="options-bar">
+	<div class="active">Main rooms page</div>
+	<a class="options-bar a" href="/rooms/new">Add Room</a>
+</div>
+
 <div class="container">
 
-	<h1 style="text-align: center; background-color: bisque;">This is the rooms page</h1>
-	<a href="/rooms/new">Add New Room</a>
-
 	<% rooms.forEach(function(room){ %>
-		<div class="card" style="width: 50%; margin: 5%; text-align: center;">
-			<img src="https://media.gettyimages.com/photos/laptop-on-coffee-table-in-a-modern-living-room-of-an-old-country-picture-id900217718?s=612x612" alt="room image">
-			<div class="card-body">
-				<h4 class="card-title"><%= room.name %></h4>
-				<p class="card-text"><%= room.description %></p>
-				<a href="/rooms/<%= room._id %>" class="btn btn-primary">Open Room</a>
+		<div class="row">
+			<div class="card" style=" text-align: center;">
+				<img src="https://media.gettyimages.com/photos/laptop-on-coffee-table-in-a-modern-living-room-of-an-old-country-picture-id900217718?s=612x612" alt="room image">
+				<div class="card-body">
+					<h4 class="card-title"><%= room.name %></h4>
+					<p class="card-text"><%= room.description %></p>
+					<a href="/rooms/<%= room._id %>" class="btn btn-primary">Open Room</a>
+				</div>
 			</div>
 		</div>
+
 	<%});%>		
 </div>
 
