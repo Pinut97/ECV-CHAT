@@ -145,15 +145,4 @@ function updateRoomInfoDB(room_name, addedRoomObjects)
 			});
 		}
 	});
-
-/*
-	console.log("Objects to send to room: " + room_objects);
-	Room.updateOne({name: room_name}, {$addFields: {objects: room_objects}}, function(err, room){
-		if(err){
-			console.log(err);
-		} else {
-			console.log(room);
-		}
-	});
-*/
 };
