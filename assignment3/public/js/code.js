@@ -7,7 +7,6 @@ let eraseBtn = document.getElementById('eraseBtn');
 let cubeBtn = document.getElementById('cubeBtn');
 
 let roomName = document.getElementById('file').innerText;
-console.log(roomName);
 let objectInfo = document.getElementById('objectInfo'); 
 let globalInformation = document.getElementById('global-information');
 
@@ -82,7 +81,7 @@ function init()
     {
         computeDt();
         scene.update(dt);
-        sendUpdateInfo();
+        sendUpdateInfo( connection );
         //document.getElementsById('translateX').value;
     }
     //draw 3D
@@ -96,6 +95,7 @@ function init()
         {
             renderer.clear( bg_color );
             renderer.render( scene, camera );
+            resize3DWindow();
         }
     }
 
@@ -222,14 +222,14 @@ function connect()
     connection.onopen = () => {
 
         init();
-        connection.send(JSON.stringify("Message from client"));
+        connection.send( JSON.stringify("Message from client") );
 
         var room_name = {
         	type: "room_name",
         	room_name: roomName
         };
 
-        connection.send(JSON.stringify(room_name));
+        connection.send( JSON.stringify( room_name ) );
     };
 
     connection.onmessage = function( msg ) {
@@ -238,17 +238,19 @@ function connect()
 
     	if(message.type === "initial_objects")
     	{
+            console.log( message.data );
             generateInitialObjects( message.data[0].objects );            
         }
         else if ( message.type === 'init' )
         {
             user_ID = message.data;
-            console.log("My ID: " + user_ID);
+            console.log("My ID: " + user_ID );
         }
-        else if ( message.type === 'update_selectedObject_info')
+        else if ( message.type === 'update_selectedObject_info' )
         {
-            console.log( "Update message received: ");
+            console.log( "Update message received: " );
             console.log( message.data );
+            updateObjectMovement( message );
         }
         else if ( message.type === 'new_object' )
         {
@@ -261,24 +263,26 @@ function connect()
     };
 };
 
-function sendUpdateInfo()
+function sendUpdateInfo( ws )
 {
     if( objectSelected )
     {
         var info = {
             type: 'update_selectedObject_info',
             id: user_ID,
+            room_name: roomName,
             data: {
                 id: objectSelected.id,
                 position: objectSelected.position,
                 rotation: objectSelected.rotation,
-                scaling: objectSelected.scaling
+                scale: objectSelected.scaling
             }
         }
-
-        connection.send(JSON.stringify(info));
+        if( isOpen( ws )){ connection.send(JSON.stringify( info )); }
     }
 }
+
+function isOpen( ws ){ return ws.readyState === ws.OPEN };
 
 window.addEventListener( 'load', connect, false );
 
@@ -330,6 +334,15 @@ function show3d()
         planner.style.display = 'block';
         mode = '2D';
     }
+};
+
+//update the position of the object that is being moved by other user
+function updateObjectMovement( message )
+{
+    var object = retrieveObjectFromScene( message.data.id );
+    object.position = message.data.position;
+    object.rotation = message.data.rotation;
+    object.scale = message.data.scale;
 };
 
 document.getElementById("lineBtn").addEventListener( 'click', function(){
@@ -395,11 +408,20 @@ document.getElementById("selectBtn").addEventListener( 'click', function(){
     }
 });
 
+window.addEventListener('resize', resizeWindow, false);
+
 //change canvas size when resizing window
 function resizeWindow()
 {
     canvas.height = canvas.parentNode.getBoundingClientRect().height;
     canvas.width = canvas.parentNode.getBoundingClientRect().width;
+};
+
+function resize3DWindow()
+{
+    //resizeWindow();
+    context3D.canvas.width = canvas.width;
+    context3D.canvas.height = canvas.height;
 };
 
 //draw background grid
@@ -538,6 +560,7 @@ function create3DCube( target, addToDB )
     var cube_message = {
         type: "new_object",
         id: user_ID,
+        room_name: roomName,
     	data: cube_object
     };
 
@@ -636,7 +659,7 @@ function selectObject( target )
 };
 
 //search the object by id and returns it
-function retrieveObjectFromScene(id)
+function retrieveObjectFromScene( id )
 {
     for(var i = 0; i < scene._nodes.length; i++)
     {
@@ -658,7 +681,8 @@ function removeObjectFromScene( id )
     }
 };
 
-function selectObjectFromList(element)
+//select object from the inspector list
+function selectObjectFromList( element )
 {
     let type = element.innerText.split("(")[0];
     let number = parseInt(element.innerText.split("(")[1].split(")")[0]);

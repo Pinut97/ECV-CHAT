@@ -19,7 +19,7 @@ app.use(bodyParser.urlencoded({extended: true}));
 app.set("view engine", "ejs");
 app.use(express.static(__dirname + "/public"));
 
-var objects  = [];
+var rooms  = [];
 var users = [];
 
 //ROUTES
@@ -48,7 +48,8 @@ wss.on("connection", function(ws){
 
 	ws.on("message", function(msg){
 		var message = JSON.parse(msg);
-		if(message.type === "room_name")
+
+		if( message.type === "room_name" )
 		{
 			room_name = message.room_name;
 			Room.find({name: room_name}, {_id: 0, objects: 1}, function(err, room_objects){
@@ -61,7 +62,20 @@ wss.on("connection", function(ws){
 						data: room_objects
 					};
 
-					ws.send(JSON.stringify(message));
+					ws.send(JSON.stringify( message ));
+				}
+
+				if( !hasRoom(room_name) )
+				{
+					room = {
+						name: room_name,
+						user_ids: []	//id of the users contained in the room
+					}
+					room.user_ids.push( index );
+					rooms.push( room )
+				}
+				else{
+					addUserToExistingRoom( room_name, index );
 				}
 			});
 		}
@@ -99,21 +113,56 @@ server.listen(9022, function(){
 //reply the message from user to other users
 function replyToOthers( message, msg )
 {
-	for( var i = 0; i < users.length; i++)
+
+	var position = returnRoomPositionByName( message.room_name );
+
+	for( var i = 0; i < rooms[position].user_ids.length; i++)
 	{
-		if( i !== message.id )
+		if( rooms[position].user_ids[i] !== message.id )
 		{
 			users[i].send( msg );
 		}
 	}
 };
 
-//Updates the elements of a room
-function updateRoomInfoDB(room_name, addedRoomObjects)
+//search a room by its name and return its position in the list
+function returnRoomPositionByName( name )
 {
+	for( var i = 0; i < rooms.length; i++)
+	{
+		if( rooms[i].name === name )
+		{
+			return i;
+		}
+	}
+};
 
-	Room.findOne({name: room_name}, function(err, foundRoom){
-		if(err){
+//return true if room exists
+function hasRoom( name )
+{
+	for( var i = 0; i < rooms.length; i++ )
+	{
+		if( rooms[i].name === name ){
+			return true;
+		}
+		else{
+			return false;
+		}
+	}
+};
+
+function addUserToExistingRoom( room_name, user_id )
+{
+	var position = returnRoomPositionByName( room_name );
+	rooms[position].user_ids.push( user_id );
+};
+
+//Updates the elements of a room
+function updateRoomInfoDB( room_name, addedRoomObjects )
+{
+	console.log( room_name );
+	Room.findOne({name: room_name}, function( err, foundRoom ){
+		if( err ){
 			console.log(err);
 		} else {
 			for(var i = 0; i < addedRoomObjects.length; i++)
