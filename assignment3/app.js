@@ -1,80 +1,34 @@
-const express = require("express");
-const app = express();
-const WebSocket = require("ws");
-const http = require('http');
-const server = http.createServer(app);
-const wss = new WebSocket.Server({ server });
+var express 	= require("express"),
+ 	app 		= express(),
+ 	bodyParser 	= require("body-parser"),
+ 	mongoose 	= require("mongoose"),
+ 	WebSocket 	= require("ws"),
+ 	http 		= require('http'),
+ 	server 		= http.createServer(app),
+ 	wss 		= new WebSocket.Server({ server })
 
-var mongoose = require("mongoose");
+//requiring models
+var Room 	= require("./models/room"),
+	Element = require("./models/element")
+
+//requiring routes
+var roomRoutes = require("./routes/rooms")
+
 mongoose.connect("mongodb://localhost/room_manager_app");
-
-var bodyParser = require("body-parser");
-
 app.use(bodyParser.urlencoded({extended: true}));
 app.set("view engine", "ejs");
-app.use(express.static("public"));
+app.use(express.static(__dirname + "/public"));
 
 var objects  = [];
 
-var objectSchema = new mongoose.Schema({
-	type: String,
-	id: Number,
-	position: [Number],
-	rotation: [Number],
-	scaling: [Number],
-});
-
-var roomSchema = new mongoose.Schema({
-	name: String,
-	description: String,
-	objects: [objectSchema]
-});
-
-var Room = mongoose.model("Room", roomSchema);
-
+//ROUTES
 app.get("/", function(req, res){
 	res.render("landing");
 });
 
-app.get("/rooms", function(req, res){
-	Room.find({}, function(err, allRooms){
-		if(err){
-			console.log(err)
-		} else {
-			res.render("rooms", {rooms:allRooms});
-		}
-	});
-});
+app.use("/rooms", roomRoutes);
 
-app.post("/rooms", function(req, res){
-	Room.create({
-		name: req.body.name,
-		description: req.body.description
-	},function(err, room){
-		if(err){
-			console.log(error);
-		} else {
-			console.log("room posted: " + room);
-		}
-	});
-
-	res.redirect("/rooms");
-});
-
-app.get("/rooms/new", function(req, res){
-	res.render("new.ejs");
-});
-
-app.get("/rooms/:id", function(req, res){
-	Room.findById(req.params.id, function(err, foundRoom){
-		if(err){
-			console.log(err)
-		} else {
-			res.render("room", {room: foundRoom});
-		}
-	});
-});
-
+//SOCKETS
 wss.on("connection", function(ws){
 	ws.send(JSON.stringify("Message from Server"));
 
@@ -123,6 +77,7 @@ server.listen(9022, function(){
 	console.log("Server Started!");
 });
 
+//Updates the elements of a room
 function updateRoomInfoDB(room_name, addedRoomObjects)
 {
 

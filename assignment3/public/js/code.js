@@ -83,7 +83,6 @@ function init()
     {
         computeDt();
         scene.update(dt);
-        document.getElementsById('translateX').value;
     }
     //draw 3D
     context3D.ondraw = function()
