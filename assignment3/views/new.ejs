@@ -1,10 +1,29 @@
-<%- include("partials/header")%>
-<h1>Create a New Room</h1>
+<!DOCTYPE html>
+<html>
+<head>
+	<title>RoomManager</title>
+	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+	<link rel="stylesheet" type="text/css" href="/css/new_room.css">
+</head>
+<body>
+
+<div class="jumbotron text-center">
+	<h1>Create a New Room</h1>
+</div>
 
 <form action="/rooms" method="POST">
-	<input type="text" name="name" placeholder="name">
-	<input type="text" name="description" placeholder="description">
-	<button>Submit!</button>
+
+	<div class="card">
+		<div class="card-body">
+			<p class="information">You are creating a new room!</p>
+			<p class="information">Give it a name and a description if you want</p>
+			
+			<input type="text" name="name" placeholder="name">
+			<input type="text" name="description" placeholder="description">
+			<button class="card button" style="margin: 0">Submit!</button>
+		</div>
+		
+	</div>
 </form>
 
 <a href="/rooms">Go Back</a>

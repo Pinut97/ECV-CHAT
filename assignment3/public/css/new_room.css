@@ -1,0 +1,26 @@
+
+body {
+    background-color: #555;
+}
+
+.card {
+    margin: 10%;
+}
+
+.information{
+    text-align: center;
+}
+
+.card input{
+    text-align: center;
+    margin: 5%;
+    display: block;
+}
+
+.card button{
+    display: flex;
+    align-content: center;
+    justify-content: center;
+
+    cursor: pointer;
+}

@@ -15,6 +15,7 @@ app.set("view engine", "ejs");
 app.use(express.static("public"));
 
 var objects  = [];
+var users = [];
 
 var objectSchema = new mongoose.Schema({
 	type: String,
@@ -76,16 +77,26 @@ app.get("/rooms/:id", function(req, res){
 });
 
 wss.on("connection", function(ws){
+
 	ws.send(JSON.stringify("Message from Server"));
+
+	var index = users.push(ws) - 1;
+
+	//give id to new user
+	var initial_message = {
+		type: 'init',
+		data: index
+	}
+	ws.send(JSON.stringify(initial_message));
 
 	var room_name;
 	var addedRoomObjects = [];
 
 	ws.on("message", function(msg){
-		var msg = JSON.parse(msg);
-		if(msg.type === "room_name")
+		var message = JSON.parse(msg);
+		if(message.type === "room_name")
 		{
-			room_name = msg.room_name;
+			room_name = message.room_name;
 			Room.find({name: room_name}, {_id: 0, objects: 1}, function(err, room_objects){
 				if(err){
 					console.log(err)
@@ -100,20 +111,28 @@ wss.on("connection", function(ws){
 				}
 			});
 		}
-		else if(msg.type === "new_object")
+		else if(message.type === "new_object")
 		{
-			//console.log(msg.data);
 			var element = {
 				room_name: room_name,
-				data: msg.data
+				data: message.data
 			};
 
+			replyToOthers( message, msg );
+
 			addedRoomObjects.push(element);
-			//console.log(addedRoomObjects);
+		}
+		else if( message.type === 'update_selectedObject_info')
+		{
+			replyToOthers( message, msg );
+		}
+		else if( message.type === 'object_deleted' )
+		{
+			replyToOthers( message, msg );
 		}
 	});
 
-	ws.on("close", function(connection){
+	ws.on("close", function(){
 		console.log("Client left");
 		updateRoomInfoDB(room_name, addedRoomObjects);
 	});
@@ -122,6 +141,18 @@ wss.on("connection", function(ws){
 server.listen(9022, function(){
 	console.log("Server Started!");
 });
+
+//reply the message from user to other users
+function replyToOthers( message, msg )
+{
+	for( var i = 0; i < users.length; i++)
+	{
+		if( i !== message.id )
+		{
+			users[i].send( msg );
+		}
+	}
+};
 
 function updateRoomInfoDB(room_name, addedRoomObjects)
 {

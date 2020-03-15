@@ -25,12 +25,11 @@ canvas = document.querySelector( "canvas" );
 context = canvas.getContext( "2d" );
 
 let objects = [];
-
 let connection;
+var user_ID;
 
 function init()
 {
-    connect();
     canvas.height = canvas.parentNode.getBoundingClientRect().height;
     canvas.width = canvas.parentNode.getBoundingClientRect().width;
 
@@ -83,7 +82,8 @@ function init()
     {
         computeDt();
         scene.update(dt);
-        document.getElementsById('translateX').value;
+        sendUpdateInfo();
+        //document.getElementsById('translateX').value;
     }
     //draw 3D
     context3D.ondraw = function()
@@ -135,7 +135,6 @@ function init()
     {
         if( e.key !== 'undefinded' )
         {
-            console.log( "w button" );
             //camera.position = vec3.scale( camera.position, camera.position, camera.position + 10 );
         }
     }
@@ -203,11 +202,8 @@ function init()
 
 function generateInitialObjects( initialObjects )
 {
-	console.log("recibo esto: " + initialObjects);
 	for(var i = 0; i < initialObjects.length; i++)
 	{
-		console.log(initialObjects[i].type);
-		console.log(initialObjects[i].position);
 		if(initialObjects[i].type === "wall")
 		{
 			createWall(initialObjects[i].origin, initialObjects[i].final, false);
@@ -219,13 +215,13 @@ function generateInitialObjects( initialObjects )
 	}
 }
 
-
 function connect()
 {
     connection = new WebSocket('ws://127.0.0.1:9022');
-    console.log("Se conecta broder");
 
     connection.onopen = () => {
+
+        init();
         connection.send(JSON.stringify("Message from client"));
 
         var room_name = {
@@ -236,21 +232,55 @@ function connect()
         connection.send(JSON.stringify(room_name));
     };
 
-    connection.onmessage = function(msg){
-        var message = JSON.parse(msg.data);
-        console.log(message);
+    connection.onmessage = function( msg ) {
+
+        var message = JSON.parse( msg.data );
+
     	if(message.type === "initial_objects")
     	{
-            console.log("parsed");
-            console.log(message.data);
-            console.log(message.data[0].objects);
-            generateInitialObjects(message.data[0].objects);            
-    	}
+            generateInitialObjects( message.data[0].objects );            
+        }
+        else if ( message.type === 'init' )
+        {
+            user_ID = message.data;
+            console.log("My ID: " + user_ID);
+        }
+        else if ( message.type === 'update_selectedObject_info')
+        {
+            console.log( "Update message received: ");
+            console.log( message.data );
+        }
+        else if ( message.type === 'new_object' )
+        {
+            create3DCube( message.data.position, false );
+        }
+        else if( message.type === 'object_deleted' )
+        {
+            removeObjectFromScene( message.data );
+        }
     };
 };
 
-window.addEventListener( 'load', init, false );
+function sendUpdateInfo()
+{
+    if( objectSelected )
+    {
+        var info = {
+            type: 'update_selectedObject_info',
+            id: user_ID,
+            data: {
+                id: objectSelected.id,
+                position: objectSelected.position,
+                rotation: objectSelected.rotation,
+                scaling: objectSelected.scaling
+            }
+        }
 
+        connection.send(JSON.stringify(info));
+    }
+}
+
+window.addEventListener( 'load', connect, false );
 
 //compute elapsed time between frames as dt
 function computeDt()
@@ -398,7 +428,7 @@ function drawGrid( size )
     context.stroke();
 };
 
-function drawLine (origin, final )
+function drawLine ( origin, final )
 {
     context.beginPath();
     context.strokeStyle = "black";
@@ -408,7 +438,7 @@ function drawLine (origin, final )
     context.stroke();
 };
 
-function createWall(origin, final, addToDB)
+function createWall( origin, final, addToDB )
 {
     //vector between the two points
     var vector = {
@@ -504,10 +534,10 @@ function create3DCube( target, addToDB )
     numObjects[1]++;
     objectID++;
     scene.root.addChild( cube );
-    
 
     var cube_message = {
-    	type: "new_object",
+        type: "new_object",
+        id: user_ID,
     	data: cube_object
     };
 
@@ -533,7 +563,7 @@ function drawCube( x, y )
     context.stroke();
 };
 
-function getObjectFromObjectList(id)
+function getObjectFromObjectList( id )
 { 
     for(var i = 0; i < objects.length; i++)
     {
@@ -544,61 +574,84 @@ function getObjectFromObjectList(id)
     }
 };
 
-function deleteObject(target)
+//delete object for user using the target where he clicked
+function deleteObject( target )
 {
+    var aux_id; //to send the id of the object erased to the other users
     for(var i = 0; i < objects.length; i++)
     {
         if(objects[i].type === "cube")
         {
-            var dist = vec3.distance( objects[i].position, target );
-            console.log( dist );
-
             if ( 50 > vec3.distance( objects[i].position, target ))
             {
-                removeObjectFromScene(objects[i].id);
-                deleteObjectFromList(objects[i]);
+                aux_id = objects[i].id;
+                removeObjectFromScene(objects[i].id);   //delete from the scene to avoid rendering it
+                deleteObjectFromList(objects[i]);   //esto no xuta -- delete from inspector
                 objects.splice(i, 1);
                 numbDeletedObjects[1]++;
             }
         }
     }
+
+    //send object deleted info to other users
+    var message = {
+        type: 'object_deleted',
+        id: user_ID,
+        data: aux_id
+    }
+
+    connection.send(JSON.stringify(message));   //send the id of the object to erase
+
 };
 
+//delete object using id
+function deleteObjectFromOutside( object_id )
+{
+    for(var i = 0; i < objects.length; i++)
+    {
+        if( objects[i].id === object_id )
+        {
+            removeObjectFromScene( object_id );   //delete from scene to avoid rendering it on 3D
+            deleteObjectFromList(objects[i]);   //esto no xuta -- delete from inspector list
+            objects.splice(i, 1);
+            numbDeletedObjects[1]++;    
+        }
+    }
+};
+
+//select object from 3D
 function selectObject( target )
 {
     for( var i = 0; i < objects.length; i ++ )
     {
         if( objects[i].type === 'cube' )
         {
-            var dist = vec3.distance( objects[i].position, target );
-            console.log( dist );
             if ( 50 > vec3.distance( objects[i].position, target ))
             {
                 objectSelected = retrieveObjectFromScene(objects[i].id);
                 setInspectorValues();
-                console.log(objectSelected);
             }
         }
     }
 };
 
+//search the object by id and returns it
 function retrieveObjectFromScene(id)
 {
     for(var i = 0; i < scene._nodes.length; i++)
     {
         if(scene._nodes[i].id === id)
         {
-            console.log(scene._nodes[i]);
             return scene._nodes[i];
         }
     }
 };
 
-function removeObjectFromScene(id)
+function removeObjectFromScene( id )
 {
-    for(var i = 0; i < scene._nodes.length; i++)
+    for(var i = 0; i < scene.root.children.length; i++)
     {
-        if(scene._nodes[i].id === id)
+        if(scene.root.children[i].id === id)
         {
             scene.root.children.splice(i, 1);
         }
@@ -620,13 +673,11 @@ function selectObjectFromList(element)
 
         if(aux === number)
         {
-            console.log(objects[i]);
             objectSelected = retrieveObjectFromScene(objects[i].id);
             setInspectorValues();
             break;
         }
     }
-    console.log(objectSelected);
 };
 
 function dot( v1, v2 )
@@ -673,13 +724,11 @@ function changeInspectorValues( )
     if( objectSelected != null)
     {
         //objectSelected.position[0]
-        var a = document.getElementById('translateX');
-        document.getElement
-        console.log(a);
+        //var a = document.getElementById('translateX');
     }
 };
 
-function addObjectToList(object) {
+function addObjectToList( object ) {
     var ul = document.getElementById("object-list");
     var li = document.createElement("li");
     
@@ -694,18 +743,20 @@ function addObjectToList(object) {
     
     if(object.type === "wall")
     {
-        li.appendChild(document.createTextNode("wall" + "(" + numObjects[0] + ")")); 
+        li.innerText = "wall" + "(" + numObjects[0] + ")";
     }
     else if(object.type === "cube") 
     {
-        li.appendChild(document.createTextNode("cube" + "(" + numObjects[1] + ")")); 
+        li.innerText = "cube" + "(" + numObjects[1] + ")";
     }
-                                  
-    ul.appendChild(li);
+    
+    li.id = "objectID" + object.id;
+    ul.appendChild( li );
 };
 
-function deleteObjectFromList(object) {
-    var ul = document.getElementById("object-list");
+function deleteObjectFromList( object ) {
+    var liToDelete = document.getElementById( "objectID" + object.id );
+    liToDelete.remove();
 };
 
 //mouse class
