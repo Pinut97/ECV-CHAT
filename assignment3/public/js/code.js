@@ -109,7 +109,16 @@ function init()
 			camera.orbit( e.deltax * -0.1, RD.UP );
             camera.orbit( e.deltay * 0.01, RD.LEFT);
 			camera.position = vec3.scaleAndAdd( camera.position, camera.position, RD.UP, e.deltay );
-		}
+        }
+        else if( objectSelected === null && selectedTool === "select" )
+        {
+            var ray = camera.getRay( e.canvasx, e.canvasy )
+            if( ray.testPlane( RD.ZERO, RD.UP) )
+            {
+                target = ray.collision_point;
+                returnObjectWhenHoovered( target );
+            }
+        }
         else if(objectSelected !== null && selectedTool === "select")
         {
             var ray = camera.getRay( e.canvasx, e.canvasy );
@@ -642,20 +651,43 @@ function deleteObjectFromOutside( object_id )
     }
 };
 
-//select object from 3D
-function selectObject( target )
+function returnObjectWhenHoovered( target )
 {
-    for( var i = 0; i < objects.length; i ++ )
+    distance = 50;
+    var object = checkDistanceWithObjects( target, distance );
+    if( typeof object !== 'undefined' )
+        retrieveObjectFromScene( object.id ).color = [0, 1, 0, 1];
+};
+
+//return the closest object to the target up to the distance
+function checkDistanceWithObjects( target, distance )
+{
+    var auxiliarDistance;
+    var pivot = 9999;
+    var objectToReturn;
+    for( var i = 0; i < objects.length; i++ )
     {
         if( objects[i].type === 'cube' )
         {
-            if ( 50 > vec3.distance( objects[i].position, target ))
+            auxiliarDistance = vec3.distance( objects[i].position, target );
+            if( distance > auxiliarDistance )
             {
-                objectSelected = retrieveObjectFromScene(objects[i].id);
-                setInspectorValues();
+                if( auxiliarDistance < pivot ){
+                    pivot = auxiliarDistance;
+                    objectToReturn = objects[i];
+                } 
             }
         }
     }
+    return objectToReturn; //return closest object or undefined otherwise
+};
+
+//select object from 3D
+function selectObject( target )
+{
+    var distance = 50;
+    objectSelected = retrieveObjectFromScene( checkDistanceWithObjects( target, distance ).id );
+    setInspectorValues();
 };
 
 //search the object by id and returns it
