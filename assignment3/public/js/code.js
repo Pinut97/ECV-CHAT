@@ -70,9 +70,17 @@ function init()
         tiling: 15,
         shader: "phong_texture"
     });
-
     objectID++;
     scene.root.addChild( floor );
+    
+    var chair = new RD.SceneNode({
+        color: [1, 1, 1, 1],
+        mesh: "/meshes/source/krzesloFency.obj",
+        position: [0, 0, 0],
+        shader: "phong_texture",
+        texture: "/meshes/source/textures/M_all_albedo.jpg "
+    });
+    scene.root.addChild( chair );
     
     //update 3D
     context3D.onupdate = function( dt )
