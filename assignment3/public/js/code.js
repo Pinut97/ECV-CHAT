@@ -20,12 +20,15 @@ let gridWidth = 10;
 
 let selectedTool = null;
 let mode = '2D';
+let walkingMode;    //object to store info about the walking view
 canvas = document.querySelector( "canvas" );
 context = canvas.getContext( "2d" );
 
 let objects = [];
 let connection;
 var user_ID;
+
+var velocity = 50;
 
 function init()
 {
@@ -67,12 +70,6 @@ function init()
         shader: "phong_texture"
     });
 
-    var floor_object = {
-        type: "floor",
-        id: floor.id,
-        position: floor.position
-    };
-
     objectID++;
     scene.root.addChild( floor );
     
@@ -82,6 +79,11 @@ function init()
         computeDt();
         scene.update(dt);
         sendUpdateInfo( connection );
+        if( context3D.keys.D )
+        {
+            walkingView();
+        }
+        moveCamera();
         //document.getElementsById('translateX').value;
     }
     //draw 3D
@@ -103,12 +105,20 @@ function init()
     context3D.captureMouse( true );
     context3D.onmousemove = function(e)
 	{
-		if(e.dragging)
+		if( e.dragging )
 		{
-            //orbit camera around
-			camera.orbit( e.deltax * -0.1, RD.UP );
-            camera.orbit( e.deltay * 0.01, RD.LEFT);
-			camera.position = vec3.scaleAndAdd( camera.position, camera.position, RD.UP, e.deltay );
+            if( selectedTool !== 'walkingView' )
+            {
+                //orbit camera around
+                camera.orbit( e.deltax * -0.1, RD.UP );
+                camera.orbit( e.deltay * 0.01, RD.LEFT);
+                camera.position = vec3.scaleAndAdd( camera.position, camera.position, RD.UP, e.deltay );
+            }
+            else{
+                console.log( "rotating" );
+                camera.rotate( e.deltax * 0.1, RD.UP );
+            }
+
         }
         else if( objectSelected === null && selectedTool === "select" )
         {
@@ -142,10 +152,7 @@ function init()
     context3D.captureKeys(true);
     context3D.onkeydown = function( e )
     {
-        if( e.key !== 'undefinded' )
-        {
-            //camera.position = vec3.scale( camera.position, camera.position, camera.position + 10 );
-        }
+
     }
 
     var target = null;
@@ -207,7 +214,6 @@ function init()
     //call for 3d loop
     context3D.animate();
 };
-
 
 function generateInitialObjects( initialObjects )
 {
@@ -813,6 +819,31 @@ function addObjectToList( object ) {
 function deleteObjectFromList( object ) {
     var liToDelete = document.getElementById( "objectID" + object.id );
     liToDelete.remove();
+};
+
+//camera movement
+function moveCamera()
+{
+    if( context3D.keys.W )
+    {
+        camera.move( camera.getFront(), velocity * dt );
+    }
+    else if ( context3D.keys.S )
+    {
+        camera.move( camera.getFront(), -velocity * dt );
+    }
+};
+
+function walkingView()
+{
+    walkingMode = {
+        position: [0, 60, 0],
+        lookingAt: RD.FRONT,
+        velocity: 100
+    }
+    selectedTool = 'walkingView';
+    camera.position = walkingMode.position;
+    camera.lookAt = ( camera.position, [0,60,0], [0,1,0] );
 };
 
 //mouse class
