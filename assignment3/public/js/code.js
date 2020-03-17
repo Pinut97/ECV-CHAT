@@ -20,6 +20,7 @@ let gridWidth = 10;
 
 let selectedTool = null;
 let mode = '2D';
+let cameraMode = "free camera";
 canvas = document.querySelector( "canvas" );
 context = canvas.getContext( "2d" );
 
