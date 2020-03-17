@@ -20,8 +20,9 @@ let gridWidth = 10;
 
 let selectedTool = null;
 let mode = '2D';
-let walkingMode;    //object to store info about the walking view
-let cameraMode = "free camera";
+let view;
+let walkingMode = null;    //object to store info about the walking view
+let freeMode = null;
 canvas = document.querySelector( "canvas" );
 context = canvas.getContext( "2d" );
 
@@ -29,7 +30,8 @@ let objects = [];
 let connection;
 var user_ID;
 
-var velocity = 50;
+var velocity = 150;
+var rotateSpeed = 5;
 
 function init()
 {
@@ -55,9 +57,21 @@ function init()
     numbDeletedObjects[0] = 0;
     numbDeletedObjects[1] = 0;
 
+    walkingMode = {
+        position: [0, 30, 500],
+        target: [0, 30, 0],
+        up: [0, 1, 0]
+    };
+
+    freeMode = {
+        position: [0, 1000, 500],
+        target: [0, 0, 0],
+        up: [0, 1, 0]
+    };
+
     camera = new RD.Camera();
     camera.perspective( 60, gl.canvas.width / gl.canvas.height, 1, 10000 );
-    camera.lookAt( [0, 1000, 500], [0,0,0], [0,1,0] );
+    freeView();
 
     var floor = new RD.SceneNode({
         type: "floor",
@@ -88,10 +102,20 @@ function init()
         computeDt();
         scene.update(dt);
         sendUpdateInfo( connection );
-        if( context3D.keys.D )
+        if( context3D.keys.Z )
         {
-            walkingView();
+            if(view === "walking")
+            {
+                saveWalkingView();
+                freeView();
+            }
+            else 
+            {
+                saveFreeView();
+                walkingView();
+            }   
         }
+
         moveCamera();
         //document.getElementsById('translateX').value;
     }
@@ -116,7 +140,7 @@ function init()
 	{
 		if( e.dragging )
 		{
-            if( selectedTool !== 'walkingView' )
+            if( view !== 'walking' )
             {
                 //orbit camera around
                 camera.orbit( e.deltax * -0.1, RD.UP );
@@ -837,22 +861,55 @@ function moveCamera()
     {
         camera.move( camera.getFront(), velocity * dt );
     }
-    else if ( context3D.keys.S )
+    if ( context3D.keys.S )
     {
         camera.move( camera.getFront(), -velocity * dt );
     }
+    if ( context3D.keys.A )
+    {
+        camera.moveLocal( RD.LEFT, velocity * dt );
+    }
+    if ( context3D.keys.D )
+    {
+        camera.moveLocal( RD.RIGHT, velocity * dt );
+    }
+    if ( context3D.keys.Q )
+    {
+        camera.rotate(rotateSpeed * dt ,RD.UP);
+    }
+    if ( context3D.keys.E )
+    {
+        camera.rotate(-rotateSpeed * dt ,RD.UP);
+    }
+
 };
+
+function freeView()
+{
+    view = "free";
+    camera.lookAt( freeMode.position, freeMode.target, freeMode.up );
+}
 
 function walkingView()
 {
-    walkingMode = {
-        position: [0, 60, 0],
-        lookingAt: RD.FRONT,
-        velocity: 100
-    }
-    selectedTool = 'walkingView';
-    camera.position = walkingMode.position;
-    camera.lookAt = ( camera.position, [0,60,0], [0,1,0] );
+    view = "walking";
+    camera.lookAt( walkingMode.position, walkingMode.target, walkingMode.up );   
+};
+
+function saveFreeView()
+{
+    freeMode.position = camera.position;
+    freeMode.target = camera.target;
+    freeMode.up = camera.up;
+    console.log("SAVE FREE VIEW: " + freeMode.position);
+};
+
+function saveWalkingView()
+{
+    walkingMode.position = camera.position;
+    walkingMode.target = camera.target;
+    walkingMode.up = camera.up;
+    console.log("SAVE WALKING VIEW: " + walkingMode.position);
 };
 
 //mouse class
