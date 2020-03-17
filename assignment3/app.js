@@ -135,6 +135,7 @@ function returnRoomPositionByName( name )
 			return i;
 		}
 	}
+	return null;
 };
 
 //return true if room exists
