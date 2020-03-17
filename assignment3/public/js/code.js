@@ -21,6 +21,7 @@ let gridWidth = 10;
 let selectedTool = null;
 let mode = '2D';
 let walkingMode;    //object to store info about the walking view
+let cameraMode = "free camera";
 canvas = document.querySelector( "canvas" );
 context = canvas.getContext( "2d" );
 

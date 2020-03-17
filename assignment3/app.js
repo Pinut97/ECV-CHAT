@@ -145,10 +145,9 @@ function hasRoom( name )
 		if( rooms[i].name === name ){
 			return true;
 		}
-		else{
-			return false;
-		}
 	}
+
+	return false;
 };
 
 function addUserToExistingRoom( room_name, user_id )
