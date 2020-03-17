@@ -87,14 +87,8 @@ function init()
     objectID++;
     scene.root.addChild( floor );
     
-    var chair = new RD.SceneNode({
-        color: [1, 1, 1, 1],
-        mesh: "/meshes/source/krzesloFency.obj",
-        position: [0, 0, 0],
-        shader: "phong_texture",
-        texture: "/meshes/source/textures/M_all_albedo.jpg "
-    });
-    scene.root.addChild( chair );
+    createObject( [0, 0, 0], true, 'chair' );
+    //scene.root.addChild( chair );
     
     //update 3D
     context3D.onupdate = function( dt )
@@ -130,7 +124,7 @@ function init()
         {
             renderer.clear( bg_color );
             renderer.render( scene, camera );
-            resize3DWindow();
+            //resize3DWindow();
         }
     }
 
@@ -560,12 +554,6 @@ function createWall( origin, final, addToDB )
     objectID++;
     wall.rotate( angleInRad, RD.UP, false );
     scene.root.addChild( wall );
-    
-
-    var wall_message = {
-    	type: "new_object",
-    	data: wall_object
-    };
 
     if(addToDB === true)
     {
@@ -577,7 +565,7 @@ function createWall( origin, final, addToDB )
 
 function create3DCube( target, addToDB )
 {
-	if(addToDB)
+	if( addToDB )
 	{
 		target = [target[0] - canvas.width * 0.5, 24, target[1] - canvas.height * 0.5];
 	}
@@ -620,6 +608,63 @@ function create3DCube( target, addToDB )
     }
     
 };
+
+function createChair( target, addToDB )
+{
+    var object, o;
+    object = new RD.SceneNode({
+        type: type,
+        id: objectID,
+        position: target,
+        scaling: [0.2, 0.2, 0.2],
+        color: [1, 1, 1, 1],
+        mesh: "/meshes/source/krzesloFency.obj",
+        shader: "phong_shader",
+        texture: "/meshes/source/textures/M_all_albedo.jpg"
+    });
+
+    o = {
+        type: object.type,
+        id: object.id,
+        position: object.position,
+        rotation: object.rotation,
+        scale: object.scaling
+    }
+
+    var obj_message = {
+        type: "new_object",
+        id: user_ID,
+        room_name: roomName,
+    	data: o
+    };
+
+    if( addToDB )
+    {	
+    	connection.send(JSON.stringify( obj_message ));
+    }
+
+    numObjects[2]++;
+    objects.push( o );
+    scene.root.addChild( object );
+    objectID++;
+};
+
+function createObject( target, addToDB, type )
+{
+    if( addToDB )
+	{
+		target = [target[0] - canvas.width * 0.5, 24, target[1] - canvas.height * 0.5];
+    }
+    
+    if( type === 'cube' )
+    {
+        create3DCube( target, addToDB );
+    }
+    else if( type === 'chair' )
+    {
+        createChair( target, addToDB );
+    }
+}
 
 function drawCube( x, y )
 {
