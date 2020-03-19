@@ -87,7 +87,7 @@ function init()
     objectID++;
     scene.root.addChild( floor );
     
-    createObject( [0, 0, 0], true, 'chair' );
+    //createObject( [0, 0, 0], true, 'chair' );
     //scene.root.addChild( chair );
     
     //update 3D
@@ -613,7 +613,7 @@ function createChair( target, addToDB )
 {
     var object, o;
     object = new RD.SceneNode({
-        type: type,
+        type: 'chair',
         id: objectID,
         position: target,
         scaling: [0.2, 0.2, 0.2],
@@ -713,7 +713,8 @@ function deleteObject( target )
     var message = {
         type: 'object_deleted',
         id: user_ID,
-        data: aux_id
+        data: aux_id,
+        room_name: roomName
     }
 
     connection.send(JSON.stringify(message));   //send the id of the object to erase

@@ -14,7 +14,10 @@ var Room 	= require("./models/room"),
 //requiring routes
 var roomRoutes = require("./routes/rooms")
 
-mongoose.connect("mongodb://localhost/room_manager_app");
+mongoose.connect( "mongodb://localhost/room_manager_app", function( err )
+{
+	if( err ) { return console.error( 'failed' ) }
+});
 app.use(bodyParser.urlencoded({extended: true}));
 app.set("view engine", "ejs");
 app.use(express.static(__dirname + "/public"));
@@ -72,14 +75,14 @@ wss.on("connection", function(ws){
 						user_ids: []	//id of the users contained in the room
 					}
 					room.user_ids.push( index );
-					rooms.push( room )
+					rooms.push( room );
 				}
 				else{
 					addUserToExistingRoom( room_name, index );
 				}
 			});
 		}
-		else if(message.type === "new_object")
+		else if( message.type === "new_object" )
 		{
 			var element = {
 				room_name: room_name,
@@ -88,7 +91,7 @@ wss.on("connection", function(ws){
 
 			replyToOthers( message, msg );
 
-			addedRoomObjects.push(element);
+			addedRoomObjects.push( element );
 		}
 		else if( message.type === 'update_selectedObject_info')
 		{
@@ -113,8 +116,10 @@ server.listen(9022, function(){
 //reply the message from user to other users
 function replyToOthers( message, msg )
 {
-
 	var position = returnRoomPositionByName( message.room_name );
+	console.log( message.name );
+	console.log( position );
+
 
 	for( var i = 0; i < rooms[position].user_ids.length; i++)
 	{
