@@ -1,0 +1,10 @@
++---------------------------
+| Àlvar Alonso Rovira
+| Pau Florentí Solano
+|
++---------------------------
+
+CONTROLS:
+
+3D: Con la free camera nos podemos mover por el mundo con A, W, S, D (izquierda, delante, atrás, derecha).
+Con las teclas Q y E podemor rotar la camera hacia izquierda y derecha.

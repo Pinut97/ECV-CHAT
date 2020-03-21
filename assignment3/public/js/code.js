@@ -31,7 +31,7 @@ let connection;
 var user_ID;
 
 var velocity = 150;
-var rotateSpeed = 5;
+var rotateSpeed = 2;
 
 const CUBE_COLOR = [0.9, 0.9, 0.7, 1];
 
@@ -179,10 +179,6 @@ function init()
     }
 
     context3D.captureKeys(true);
-    context3D.onkeydown = function( e )
-    {
-
-    }
 
     var target = null;
     context3D.onmouseup = function( e )
@@ -303,6 +299,21 @@ function connect()
         else if( message.type === 'object_deleted' )
         {
             removeObjectFromScene( message.data );
+        }
+        else if( message.type === 'update_info' )   //new user is asking for room info
+        {
+            console.log('update info received ');
+            var room_info = {
+                id: message.id,
+                type: 'update_room_info',
+                room_name: message.room_name,
+                data: objects
+            }
+            connection.send( JSON.stringify( room_info ));
+        }
+        else if ( message.type === 'update_room_info' )
+        {
+            console.log( "second user, waiting to update" );
         }
     };
 };
@@ -944,11 +955,21 @@ function moveCamera()
     }
     if ( context3D.keys.Q )
     {
-        camera.rotate(rotateSpeed * dt ,RD.UP);
+        if( !objectSelected )
+            camera.rotate(rotateSpeed * dt ,RD.UP);
+        else
+        {
+            objectSelected.rotate( rotateSpeed * dt, RD.UP );
+        }
     }
     if ( context3D.keys.E )
     {
-        camera.rotate(-rotateSpeed * dt ,RD.UP);
+        if( !objectSelected )
+            camera.rotate(-rotateSpeed * dt ,RD.UP);
+        else
+        {
+            objectSelected.rotate( -rotateSpeed * dt, RD.UP );
+        }
     }
 
 };
@@ -979,6 +1000,14 @@ function saveWalkingView()
     walkingMode.target = camera.target;
     walkingMode.up = camera.up;
     console.log("SAVE WALKING VIEW: " + walkingMode.position);
+};
+
+function udpateRoomInfo( data )
+{
+    for( var i = 0; i < data.length; i++ )
+    {
+
+    }
 };
 
 //mouse class
