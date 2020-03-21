@@ -22,8 +22,9 @@ app.use(bodyParser.urlencoded({extended: true}));
 app.set("view engine", "ejs");
 app.use(express.static(__dirname + "/public"));
 
-var rooms  = [];
+var rooms  = [];	//info about the rooms
 var users = [];
+var clients = [];	//connection itself
 
 //ROUTES
 app.get("/", function(req, res){
@@ -37,7 +38,7 @@ wss.on("connection", function(ws){
 
 	ws.send(JSON.stringify("Message from Server"));
 
-	var index = users.push(ws) - 1;
+	var index = clients.push(ws) - 1;
 
 	//give id to new user
 	var initial_message = {
@@ -81,6 +82,7 @@ wss.on("connection", function(ws){
 					addUserToExistingRoom( room_name, index );
 				}
 			});
+			addUserToList( message, index );
 		}
 		else if( message.type === "new_object" )
 		{
@@ -104,8 +106,15 @@ wss.on("connection", function(ws){
 	});
 
 	ws.on("close", function(){
-		console.log("Client left");
-		updateRoomInfoDB(room_name, addedRoomObjects);
+		console.log("Client " + index + " left");
+
+		if( eliminateUser( index ) )
+		{
+			updateRoomInfoDB( room_name, addedRoomObjects );
+		}
+
+		//eliminate it from connetions list
+		clients.splice( clients.indexOf( ws ), 1 );
 	});
 });
 
@@ -117,15 +126,11 @@ server.listen(9022, function(){
 function replyToOthers( message, msg )
 {
 	var position = returnRoomPositionByName( message.room_name );
-	console.log( message.name );
-	console.log( position );
-
-
 	for( var i = 0; i < rooms[position].user_ids.length; i++)
 	{
 		if( rooms[position].user_ids[i] !== message.id )
 		{
-			users[i].send( msg );
+			clients[i].send( msg );
 		}
 	}
 };
@@ -152,10 +157,10 @@ function hasRoom( name )
 			return true;
 		}
 	}
-
 	return false;
 };
 
+//add the user id to the info in the room
 function addUserToExistingRoom( room_name, user_id )
 {
 	var position = returnRoomPositionByName( room_name );
@@ -165,7 +170,7 @@ function addUserToExistingRoom( room_name, user_id )
 //Updates the elements of a room
 function updateRoomInfoDB( room_name, addedRoomObjects )
 {
-	console.log( room_name );
+	console.log( "update info to db of: " + room_name );
 	Room.findOne({name: room_name}, function( err, foundRoom ){
 		if( err ){
 			console.log(err);
@@ -178,9 +183,52 @@ function updateRoomInfoDB( room_name, addedRoomObjects )
 				if(err){
 					console.log(err)
 				} else {
-					console.log(savedRoom);
+					console.log( "Room: " + room_name + " saved" );
+					//console.log(savedRoom);
 				}
 			});
 		}
 	});
+};
+
+function addUserToList( msg, index )
+{
+	var newUser = {
+		id: index,
+		room_name: msg.room_name
+	}
+	users.push( newUser );
+};
+
+function findUserByIndex( index )
+{
+    for( var i = 0; i < users.length; i++ )
+    {
+        if ( users[i].id === index )
+        {
+            return users[i];
+        }
+    }
+};
+
+//eliminate user from the list of the room
+function eliminateUser( index )
+{
+	for( var i = 0; i < rooms.length; i++ )
+	{
+		if ( rooms[i].name === users[index].room_name )
+		{
+			for( var j = 0; j < rooms[i].user_ids.length; j++ )
+			{
+				if ( rooms[i].user_ids[j] === index )
+				{
+					rooms[i].user_ids.splice( j, 1 );
+				}
+			}
+			if( rooms[i].user_ids.length === 0 )
+			{	
+				return rooms[i].name;	//return true if room is empty
+			}
+		}
+	}
 };

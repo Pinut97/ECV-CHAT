@@ -33,6 +33,8 @@ var user_ID;
 var velocity = 150;
 var rotateSpeed = 5;
 
+const CUBE_COLOR = [0.9, 0.9, 0.7, 1];
+
 function init()
 {
     canvas.height = canvas.parentNode.getBoundingClientRect().height;
@@ -575,7 +577,7 @@ function create3DCube( target, addToDB )
         id: objectID,
         position: target,
         scaling: [100, 50, 100],
-        color: [0.9, 0.9, 0.7, 1],
+        color: CUBE_COLOR,
         mesh: "cube",
         shader: "phong"
     });
@@ -740,8 +742,12 @@ function returnObjectWhenHoovered( target )
 {
     distance = 50;
     var object = checkDistanceWithObjects( target, distance );
+    var goalObject;
     if( typeof object !== 'undefined' )
-        retrieveObjectFromScene( object.id ).color = [0, 1, 0, 1];
+    {
+        goalObject = retrieveObjectFromScene( object.id )
+        goalObject.color = [0, 1, 0, 1];
+    }
 };
 
 //return the closest object to the target up to the distance
@@ -762,17 +768,34 @@ function checkDistanceWithObjects( target, distance )
                     objectToReturn = objects[i];
                 } 
             }
+            else
+            {
+                returnObjectsToNormalColor( retrieveObjectFromScene( objects[i].id ), objects[i].type );
+            }
         }
     }
     return objectToReturn; //return closest object or undefined otherwise
 };
 
+//return to normal color of the object that is not hoovered
+function returnObjectsToNormalColor( object, type )
+{
+    if( type === 'cube' )
+    {
+        object.color = CUBE_COLOR;  //only changing node color, what about list objects color?
+    }
+};
+
+
 //select object from 3D
 function selectObject( target )
 {
     var distance = 50;
-    objectSelected = retrieveObjectFromScene( checkDistanceWithObjects( target, distance ).id );
-    setInspectorValues();
+    if( checkDistanceWithObjects( target, distance ) !== 'undefined' )
+    {
+        objectSelected = retrieveObjectFromScene( checkDistanceWithObjects( target, distance ).id );
+        setInspectorValues();
+    }
 };
 
 //search the object by id and returns it
