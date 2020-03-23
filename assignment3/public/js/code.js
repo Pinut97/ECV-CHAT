@@ -90,6 +90,8 @@ function init()
     });
     objectID++;
     scene.root.addChild( floor );
+
+    //createObject([0,0,0], false, 'sofa' );
     
     //update 3D
     context3D.onupdate = function( dt )
@@ -186,21 +188,26 @@ function init()
 			var ray = camera.getRay( e.canvasx, e.canvasy );
             if( ray.testPlane( RD.ZERO, RD.UP ) ) //collision
             {
+                target = ray.collision_point;
+                //target[0]+= canvas.width * 0.5;
+                //target[2]+= canvas.height * 0.5;
                 if( selectedTool === 'cube' )
                 {
-                    target = ray.collision_point;
                     create3DCube( [target[0] + canvas.width * 0.5, target[2] + canvas.height * 0.5], true ); //convert to 2D coordinates
                     target = null;
                 }
                 else if( selectedTool === 'chair' )
                 {
-                    target = ray.collision_point;
                     createObject([target[0] + canvas.width * 0.5, target[2] + canvas.height * 0.5], true, 'chair');
+                    target = null;
+                }
+                else if( selectedTool === 'sofa' )
+                {
+                    createObject( [target[0] + canvas.width * 0.5, target[2] + canvas.height * 0.5], true, 'sofa' );
                     target = null;
                 }
                 else if (selectedTool === 'line')
                 {
-                    target = ray.collision_point;
                     target[0]+= canvas.width * 0.5;
                     target[2]+= canvas.height * 0.5;
 
@@ -224,10 +231,12 @@ function init()
                         var node = scene.testRay( ray, undefined, undefined, 0x1, true );
                         if( node )
                         {
-                            objectSelected = node;
-                            setInspectorValues();
+                            if( node.id !== 0)  //to avoid selecting the floor
+                            {
+                                objectSelected = node;
+                                setInspectorValues();
+                            }
                         }
-                        //selectObject( target );
                     }
                     else 
                     {   
@@ -242,7 +251,6 @@ function init()
                         var node = scene.testRay( ray, undefined, undefined, 0x1, true );
                         if( node )
                         {
-                            console.log( node );
                             eraseObject( node );
                         }
                         //deleteObject( target ); TODO delete this function?
@@ -477,6 +485,21 @@ document.getElementById("chairBtn").addEventListener( 'click', function(){
     }
 });
 
+document.getElementById("sofaBtn").addEventListener( 'click', function(){
+    if( selectedTool !== 'sofa' )
+    {
+        selectedTool = 'sofa';
+        this.style.border = "solid #0000FF";
+        lineBtn.style.border = "none";
+        eraseBtn.style.border = "none";
+        selectBtn.style.border = "none";
+    }
+    else{
+        selectedTool = null;
+        this.style.border = 'none';
+    }
+});
+
 document.getElementById("selectBtn").addEventListener( 'click', function(){
     if( selectedTool !== 'select' )
     {
@@ -659,11 +682,11 @@ function createChair( target, addToDB )
         type: 'chair',
         id: objectID,
         position: target,
-        scaling: [0.2, 0.2, 0.2],
+        scaling: [0.25, 0.25, 0.25],
         color: [1, 1, 1, 1],
-        mesh: "/meshes/source/krzesloFency.obj",
+        mesh: "/meshes/chair.obj",
         shader: "phong_shader",
-        texture: "/meshes/source/textures/M_all_albedo.jpg"
+        texture: "/textures/chair_texture.jpeg"
     });
 
     o = {
@@ -692,11 +715,91 @@ function createChair( target, addToDB )
     objectID++;
 };
 
+function createSofa( target, addToDB )
+{
+    var object, o;
+    object = new RD.SceneNode({
+        type: 'sofa',
+        id: objectID,
+        position: target,
+        scaling: [1000, 1000, 1000],
+        color: [0.02, 0.08, 0.23, 1],
+        mesh: "/meshes/sofa.obj",
+        shader: "phong",
+        texture: "/textures/sofa.png"
+    });
+
+    o = {
+        type: 'sofa',
+        id: object.id,
+        position: object.position,
+        rotation: object.rotation,
+        scale: object.scaling
+    }
+
+    var obj_message = {
+        type: "new_object",
+        id: user_ID,
+        room_name: roomName,
+    	data: o
+    };
+
+    if( addToDB )
+    {	
+    	connection.send(JSON.stringify( obj_message ));
+    }
+
+    numObjects[3]++;
+    objects.push( o );
+    scene.root.addChild( object );
+    objectID++;
+};
+
+function createShelf( target, addToDB )
+{
+    var object, o;
+    object = new RD.SceneNode({
+        type: 'shelf',
+        id: objectID,
+        position: target,
+        scaling: [2, 2, 2],
+        color: [1, 1, 1, 1],
+        mesh: "/meshes/aquarium_shelf.obj",
+        shader: "phong_shader",
+        texture: "/textures/Albedo.png"
+    });
+
+    o = {
+        type: 'shelf',
+        id: object.id,
+        position: object.position,
+        rotation: object.rotation,
+        scale: object.scaling
+    }
+
+    var obj_message = {
+        type: "new_object",
+        id: user_ID,
+        room_name: roomName,
+    	data: o
+    };
+
+    if( addToDB )
+    {	
+    	connection.send(JSON.stringify( obj_message ));
+    }
+
+    numObjects[4]++;
+    objects.push( o );
+    scene.root.addChild( object );
+    objectID++;
+}
+
 function createObject( target, addToDB, type )
 {
     if( addToDB )
 	{
-		target = [target[0] - canvas.width * 0.5, 24, target[1] - canvas.height * 0.5];
+		target = [target[0] - canvas.width * 0.5, 0, target[1] - canvas.height * 0.5];
     }
     
     if( type === 'cube' )
@@ -706,6 +809,14 @@ function createObject( target, addToDB, type )
     else if( type === 'chair' )
     {
         createChair( target, addToDB );
+    }
+    else if( type === 'sofa' )
+    {
+        createSofa( target, addToDB );
+    }
+    else if( type === 'shelf' )
+    {
+        createShelf( target, addToDB );
     }
 }
 
@@ -761,7 +872,7 @@ function eraseObject( node )
 };
 
 //delete object for user using the target where he clicked
-//FIXME
+//FIXME unused function
 function deleteObject( target )
 {
     var aux_id; //to send the id of the object erased to the other users
@@ -855,6 +966,7 @@ function returnObjectsToNormalColor( object, type )
     }
 };
 
+//FIXME unused function
 //select object from 3D by the target point of the ray
 function selectObject( target )
 {
