@@ -303,7 +303,8 @@ function connect()
     	{
             console.log(message);
             console.log( message.data );
-            generateInitialObjects( message.data[0].objects );            
+            if( message.data )
+                generateInitialObjects( message.data.objects );            
         }
         else if ( message.type === 'init' )
         {

@@ -50,7 +50,7 @@ wss.on("connection", function(ws){
 	var room_name;
 	var room_index;
 
-	ws.on("message", function(msg){
+	ws.on("message", async function(msg){
 		var message = JSON.parse(msg);
 
 		//enter a room
@@ -68,8 +68,8 @@ wss.on("connection", function(ws){
 				};
 
 				//get the objects of the room from the db
-				room.objects = getRoomObjectsDB(room.name, ws);
-				console.log("Room objects: " + room.objects);
+				room.objects = await getRoomObjectsDB(room.name, ws);
+				console.log("Room objects: ", room.objects);
 
 				var message = {
 					type: "initial_objects",
@@ -87,7 +87,7 @@ wss.on("connection", function(ws){
 				sendRoomInfo( room_name, index );
 			}
 
-			room_index = getRoomIndex(room_name);
+			room_index = getRoomIndex( room_name );
 			addUserToList( message, index );
 		}
 		else if( message.type === "new_object" )
@@ -98,8 +98,10 @@ wss.on("connection", function(ws){
 			};
 
 			replyToOthers( message, msg );
-
-			rooms[room_index].push( element );
+			console.log( room_index );
+			console.log( rooms );
+			console.log(rooms[room_index]);
+			rooms[room_index].objects.objects.push( element );
 		}
 		else if( message.type === 'update_selectedObject_info')
 		{
@@ -242,22 +244,23 @@ function eliminateUser( index )
 	}
 };
 
-function getRoomObjectsDB( room_name, ws )
+async function getRoomObjectsDB( room_name )
 {
 
 	var foundObjects;
 
-	Room.findOne({name: room_name}, { _id : 0, objects: 1}, function(err, foundRoom){
+	foundObjects = await Room.findOne({name: room_name}, { _id : 0, objects: 1}, function(err, foundRoom) {
 		if(err){
 			console.log(err);
 			return null;
 		} else {
 			console.log("getRoomObjectsDB: " + foundRoom.objects);
-			return foundRoom.objects;
+			foundObjects = foundRoom.objects;
 		}
 	});
 
-	if(foundObjects)
+	console.log( foundObjects );
+	if( foundObjects )
 	{
 		return foundObjects;
 	}
