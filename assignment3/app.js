@@ -101,7 +101,7 @@ wss.on("connection", function(ws){
 			console.log( room_index );
 			console.log( rooms );
 			console.log(rooms[room_index]);
-			rooms[room_index].objects.objects.push( element );
+			rooms[room_index].objects.push( element );
 		}
 		else if( message.type === 'update_selectedObject_info')
 		{
@@ -262,7 +262,7 @@ async function getRoomObjectsDB( room_name )
 	console.log( foundObjects );
 	if( foundObjects )
 	{
-		return foundObjects;
+		return foundObjects.objects;
 	}
 	else
 	{
@@ -303,8 +303,6 @@ function sendRoomInfo(room_name, index)
 			clients[index].send(JSON.stringify(message));
 		}
 	}
-
-	console.log("ERROR");
 };
 
 function getRoomIndex(room_name)
