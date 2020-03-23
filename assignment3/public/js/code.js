@@ -221,7 +221,13 @@ function init()
                     if(objectSelected === null)
                     {
                         target = ray.collision_point;
-                        selectObject( target );
+                        var node = scene.testRay( ray, undefined, undefined, 0x1, true );
+                        if( node )
+                        {
+                            objectSelected = node;
+                            setInspectorValues();
+                        }
+                        //selectObject( target );
                     }
                     else 
                     {   
@@ -661,7 +667,7 @@ function createChair( target, addToDB )
     });
 
     o = {
-        type: object.type,
+        type: 'chair',
         id: object.id,
         position: object.position,
         rotation: object.rotation,
@@ -849,7 +855,7 @@ function returnObjectsToNormalColor( object, type )
     }
 };
 
-//select object from 3D
+//select object from 3D by the target point of the ray
 function selectObject( target )
 {
     var distance = 50;

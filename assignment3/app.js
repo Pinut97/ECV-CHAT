@@ -111,11 +111,15 @@ wss.on("connection", function(ws){
 
 	ws.on("close", function(){
 		console.log("Client " + index + " left");
+		
+		var room = eliminateUser( index );
 
-		if( eliminateUser( index ) )
+		if( room )
 		{
-			updateRoomInfoDB( room_name, addedRoomObjects );
+			updateRoomInfoDB( room, addedRoomObjects );
 		}
+		
+		//TODO eliminate room
 
 		//eliminate it from connetions list
 		clients.splice( clients.indexOf( ws ), 1 );
