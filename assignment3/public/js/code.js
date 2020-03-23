@@ -304,7 +304,7 @@ function connect()
             console.log(message);
             console.log( message.data );
             if( message.data )
-                generateInitialObjects( message.data.objects );            
+                generateInitialObjects( message.data );            
         }
         else if ( message.type === 'init' )
         {
