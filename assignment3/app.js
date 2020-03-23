@@ -48,37 +48,46 @@ wss.on("connection", function(ws){
 	ws.send(JSON.stringify(initial_message));
 
 	var room_name;
-	var addedRoomObjects = [];
+	var room_index;
 
 	ws.on("message", function(msg){
 		var message = JSON.parse(msg);
 
+		//enter a room
 		if( message.type === "room_name" )
 		{
 			room_name = message.room_name;
 
-			if( !hasRoom(room_name) )	//add room to list
+			if( !hasRoom(room_name) )	//entering a new room
 			{
-				findRoomInDDBB( room_name, ws );
 
 				room = {
 					name: room_name,
-					user_ids: []	//id of the users contained in the room
-				}
+					user_ids: [],	//id of the users contained in the room
+					objects: [] //room objects
+				};
+
+				//get the objects of the room from the db
+				room.objects = getRoomObjectsDB(room.name, ws);
+				console.log("Room objects: " + room.objects);
+
+				var message = {
+					type: "initial_objects",
+					data: room.objects
+				};
+
+				clients[index].send(JSON.stringify(message));
+
 				room.user_ids.push( index );
 				rooms.push( room );
-			}
-			else if( isRoomEmpty( room_name ))	//if exists room but there is no one to retrieve the info from
-			{
-				findRoomInDDBB( room_name, ws );
-				addUserToExistingRoom( room_name, index );
 			}
 			else	//add user to existing room, also has to retrieve the info so far
 			{
 				addUserToExistingRoom( room_name, index );
-				askForRoomInfo( room_name, index );
+				sendRoomInfo( room_name, index );
 			}
-			
+
+			room_index = getRoomIndex(room_name);
 			addUserToList( message, index );
 		}
 		else if( message.type === "new_object" )
@@ -90,14 +99,19 @@ wss.on("connection", function(ws){
 
 			replyToOthers( message, msg );
 
-			addedRoomObjects.push( element );
+			rooms[room_index].push( element );
 		}
 		else if( message.type === 'update_selectedObject_info')
 		{
+			var object_index = getObjectIndex(room_index, message.data.id);
+			rooms[room_index].objects[object_index].position = message.data.position;
+			rooms[room_index].objects[object_index].rotation = message.data.rotation;
+			rooms[room_index].objects[object_index].scale = message.data.scale;
 			replyToOthers( message, msg );
 		}
 		else if( message.type === 'object_deleted' )
 		{
+			rooms[room_index].objects.splice(getObjectIndex(room_index, message.data), 1);
 			replyToOthers( message, msg );
 		}
 		else if( message.type === 'update_room_info')
@@ -116,10 +130,9 @@ wss.on("connection", function(ws){
 
 		if( room )
 		{
-			updateRoomInfoDB( room, addedRoomObjects );
+			updateRoomInfoDB( room, rooms[room_index].objects );
+			deleteRoom(room);
 		}
-		
-		//TODO eliminate room
 
 		//eliminate it from connetions list
 		clients.splice( clients.indexOf( ws ), 1 );
@@ -176,27 +189,15 @@ function addUserToExistingRoom( room_name, user_id )
 };
 
 //Updates the elements of a room
-function updateRoomInfoDB( room_name, addedRoomObjects )
+function updateRoomInfoDB( room_name, room_objects )
 {
-	console.log( "update info to db of: " + room_name );
-	Room.findOne({name: room_name}, function( err, foundRoom ){
-		if( err ){
+	Room.update({name: room_name}, {$set: {objects: room_objects}}, function(err, room){
+		if(err){
 			console.log(err);
 		} else {
-			for(var i = 0; i < addedRoomObjects.length; i++)
-			{
-				foundRoom.objects.push(addedRoomObjects[i].data);
-			}
-			foundRoom.save(function(err, savedRoom){
-				if(err){
-					console.log(err)
-				} else {
-					console.log( "Room: " + room_name + " saved" );
-					//console.log(savedRoom);
-				}
-			});
+			console.log(room);
 		}
-	});
+	})
 };
 
 function addUserToList( msg, index )
@@ -241,21 +242,30 @@ function eliminateUser( index )
 	}
 };
 
-function findRoomInDDBB( room_name, ws )
+function getRoomObjectsDB( room_name, ws )
 {
-	Room.find({name: room_name}, {_id: 0, objects: 1}, function(err, room_objects){
+
+	var foundObjects;
+
+	Room.findOne({name: room_name}, { _id : 0, objects: 1}, function(err, foundRoom){
 		if(err){
-			console.log(err)
+			console.log(err);
+			return null;
 		} else {
-
-			var message = {
-				type: "initial_objects",
-				data: room_objects
-			};
-
-			ws.send(JSON.stringify( message ));
+			console.log("getRoomObjectsDB: " + foundRoom.objects);
+			return foundRoom.objects;
 		}
 	});
+
+	if(foundObjects)
+	{
+		return foundObjects;
+	}
+	else
+	{
+		return null;
+	}
+
 };
 
 function isRoomEmpty( room_name )
@@ -263,16 +273,72 @@ function isRoomEmpty( room_name )
 	if( rooms[ returnRoomPositionByName(room_name) ].length === 0 )
 		return true;
 	return false;
-}
-
-//ask the oldest user of the room for info
-function askForRoomInfo( room_name, index )
-{
-	var oldest_user_id = rooms[ returnRoomPositionByName(room_name) ].user_ids[0];
-	var ask_for_info = {
-		id: index, 
-		type: 'update_info'
-	}
-	console.log(oldest_user_id);
-	clients[oldest_user_id].send( JSON.stringify( ask_for_info ) );
 };
+
+function deleteRoom (room_name)
+{
+	for(var i = 0; i < rooms.length; i++)
+	{
+		if(rooms[i].name === room_name)
+		{
+			rooms.splice(i, 1);
+		}
+	}
+};
+
+function sendRoomInfo(room_name, index)
+{
+	for(var i = 0; i < rooms.length; i++)
+	{
+		if(rooms[i].name === room_name)
+		{
+			message = {
+				type: "initial_objects",
+				data: rooms[i].objects
+			};
+
+			clients[index].send(JSON.stringify(message));
+		}
+	}
+
+	console.log("ERROR");
+};
+
+function getRoomIndex(room_name)
+{
+	for(var i = 0; i < rooms.length; i++)
+	{
+		if(rooms[i].name === room_name)
+		{
+			return i;
+		}
+	}
+};
+
+function getObjectIndex(room_index, objectId)
+{
+	for(var i = 0; i < rooms[room_index].objects; i++)
+	{
+		if(rooms[room_index].objects[i].id === objectId)
+		{
+			return i;
+		}
+	}
+};
+
+/*
+function sendRoomInfo(room_name, index)
+{
+	var room_objects = [];
+
+	Room.findOne({name: room_name}, {_id: 0, objects: 1}, function(err, foundRoom){
+		if(err){
+			console.log(err);
+		} else {
+			console.log("SendRoomInfo: " + room_objects);
+			room_objects = foundRoom.objects;
+
+		}
+	});
+};
+*/

@@ -301,6 +301,7 @@ function connect()
 
     	if(message.type === "initial_objects")
     	{
+            console.log(message);
             console.log( message.data );
             generateInitialObjects( message.data[0].objects );            
         }
@@ -322,21 +323,6 @@ function connect()
         else if( message.type === 'object_deleted' )
         {
             removeObjectFromScene( message.data );
-        }
-        else if( message.type === 'update_info' )   //new user is asking for room info
-        {
-            console.log('update info received ');
-            var room_info = {
-                id: message.id,
-                type: 'update_room_info',
-                room_name: message.room_name,
-                data: objects
-            }
-            connection.send( JSON.stringify( room_info ));
-        }
-        else if ( message.type === 'update_room_info' )
-        {
-            console.log( "second user, waiting to update" );
         }
     };
 };
