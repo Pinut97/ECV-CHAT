@@ -1,6 +1,6 @@
 
 let canvas, context, mouse, objectID, objectSelected;
-let context3D, renderer, camera, bg_color = [0, 0, 0, 1];
+let context3D, renderer, walkingcamera, camera, bg_color = [0, 0, 0, 1];
 
 let lineBtn = document.getElementById('lineBtn');
 let eraseBtn = document.getElementById('eraseBtn');
@@ -60,8 +60,8 @@ function init()
     numbDeletedObjects[1] = 0;
 
     walkingMode = {
-        position: [0, 30, 500],
-        target: [0, 30, 0],
+        position: [0, 80, 500],
+        target: [0, 80, 0],
         up: [0, 1, 0]
     };
 
@@ -73,6 +73,8 @@ function init()
 
     camera = new RD.Camera();
     camera.perspective( 60, gl.canvas.width / gl.canvas.height, 1, 10000 );
+    walkingcamera = new RD.Camera();
+    walkingcamera.perspective( 60, gl.canvas.width / gl.canvas.height, 1, 10000 );
     freeView();
 
     var floor = new RD.SceneNode({
@@ -89,9 +91,6 @@ function init()
     objectID++;
     scene.root.addChild( floor );
     
-    //createObject( [0, 0, 0], true, 'chair' );
-    //scene.root.addChild( chair );
-    
     //update 3D
     context3D.onupdate = function( dt )
     {
@@ -102,12 +101,10 @@ function init()
         {
             if(view === "walking")
             {
-                saveWalkingView();
                 freeView();
             }
-            else 
+            else
             {
-                saveFreeView();
                 walkingView();
             }   
         }
@@ -125,7 +122,8 @@ function init()
         else
         {
             renderer.clear( bg_color );
-            renderer.render( scene, camera );
+            if ( view === 'free' ){ renderer.render( scene, camera ); }
+            else{ renderer.render( scene, walkingcamera ); }
             //resize3DWindow();
         }
     }
@@ -143,11 +141,10 @@ function init()
                 camera.orbit( e.deltay * 0.01, RD.LEFT);
                 camera.position = vec3.scaleAndAdd( camera.position, camera.position, RD.UP, e.deltay );
             }
-            else{
-                console.log( "rotating" );
-                camera.rotate( e.deltax * 0.1, RD.UP );
+            else
+            {
+                walkingcamera.rotate( -e.deltax * 0.01, RD.UP );
             }
-
         }
         else if( objectSelected === null && selectedTool === "select" )
         {
@@ -158,7 +155,7 @@ function init()
                 returnObjectWhenHoovered( target );
             }
         }
-        else if(objectSelected !== null && selectedTool === "select")
+        else if( objectSelected !== null && selectedTool === "select" )
         {
             var ray = camera.getRay( e.canvasx, e.canvasy );
             if(ray.testPlane( RD.ZERO, RD.UP))
@@ -195,6 +192,12 @@ function init()
                     create3DCube( [target[0] + canvas.width * 0.5, target[2] + canvas.height * 0.5], true ); //convert to 2D coordinates
                     target = null;
                 }
+                else if( selectedTool === 'chair' )
+                {
+                    target = ray.collision_point;
+                    createObject([target[0] + canvas.width * 0.5, target[2] + canvas.height * 0.5], true, 'chair');
+                    target = null;
+                }
                 else if (selectedTool === 'line')
                 {
                     target = ray.collision_point;
@@ -227,10 +230,16 @@ function init()
                 }
                 else if(selectedTool === 'erase')
                 {
-                    if(objectSelected === null)
+                    if( objectSelected === null )
                     {
                         target = ray.collision_point;
-                        deleteObject( target );
+                        var node = scene.testRay( ray, undefined, undefined, 0x1, true );
+                        if( node )
+                        {
+                            console.log( node );
+                            eraseObject( node );
+                        }
+                        //deleteObject( target ); TODO delete this function?
                     }
                 }
             }
@@ -436,6 +445,21 @@ document.getElementById("cubeBtn").addEventListener( 'click', function(){
     if( selectedTool !== 'cube' )
     {
         selectedTool = 'cube';
+        this.style.border = "solid #0000FF";
+        lineBtn.style.border = "none";
+        eraseBtn.style.border = "none";
+        selectBtn.style.border = "none";
+    }
+    else{
+        selectedTool = null;
+        this.style.border = 'none';
+    }
+});
+
+document.getElementById("chairBtn").addEventListener( 'click', function(){
+    if( selectedTool !== 'chair' )
+    {
+        selectedTool = 'chair';
         this.style.border = "solid #0000FF";
         lineBtn.style.border = "none";
         eraseBtn.style.border = "none";
@@ -703,7 +727,35 @@ function getObjectFromObjectList( id )
     }
 };
 
+//pass the node returned from the ray and delete the object
+function eraseObject( node )
+{
+    var aux_id;
+    for( var i = 0; i < objects.length; i++ )
+    {
+        if( objects[i].id === node.id )
+        {
+            aux_id = node.id;
+            deleteObjectFromList( objects[i] ); //delete it from the inspector list
+            objects.splice( i, 1 );             //delete it from the objects list
+            scene.root.children.splice( scene.root.children.indexOf( node ), 1 );   //delete it from the scene nodes list
+        }
+    }
+
+        //send object deleted info to other users
+        var message = {
+            type: 'object_deleted',
+            id: user_ID,
+            data: aux_id,
+            room_name: roomName
+        }
+    
+        connection.send(JSON.stringify(message));   //send the id of the object to erase
+
+};
+
 //delete object for user using the target where he clicked
+//FIXME
 function deleteObject( target )
 {
     var aux_id; //to send the id of the object erased to the other users
@@ -715,7 +767,7 @@ function deleteObject( target )
             {
                 aux_id = objects[i].id;
                 removeObjectFromScene(objects[i].id);   //delete from the scene to avoid rendering it
-                deleteObjectFromList(objects[i]);   //esto no xuta -- delete from inspector
+                deleteObjectFromList(objects[i]);   //delete object from inspector list
                 objects.splice(i, 1);
                 numbDeletedObjects[1]++;
             }
@@ -742,7 +794,7 @@ function deleteObjectFromOutside( object_id )
         if( objects[i].id === object_id )
         {
             removeObjectFromScene( object_id );   //delete from scene to avoid rendering it on 3D
-            deleteObjectFromList(objects[i]);   //esto no xuta -- delete from inspector list
+            deleteObjectFromList( objects[i] );   //delete object from inspector list
             objects.splice(i, 1);
             numbDeletedObjects[1]++;    
         }
@@ -796,7 +848,6 @@ function returnObjectsToNormalColor( object, type )
         object.color = CUBE_COLOR;  //only changing node color, what about list objects color?
     }
 };
-
 
 //select object from 3D
 function selectObject( target )
@@ -939,24 +990,31 @@ function moveCamera()
 {
     if( context3D.keys.W )
     {
-        camera.move( camera.getFront(), velocity * dt );
+        if( view === 'free' ) { camera.move( camera.getFront(), velocity * dt ); }
+        else { walkingcamera.move( walkingcamera.getFront(), velocity * dt ) }
     }
     if ( context3D.keys.S )
     {
-        camera.move( camera.getFront(), -velocity * dt );
+        if( view === 'free' ) { camera.move( camera.getFront(), -velocity * dt ); }
+        else { walkingcamera.move( walkingcamera.getFront(), -velocity * dt ) }
     }
     if ( context3D.keys.A )
     {
-        camera.moveLocal( RD.LEFT, velocity * dt );
+        if( view === 'free' ) { camera.moveLocal( RD.LEFT, velocity * dt ); }
+        else { walkingcamera.moveLocal( RD.LEFT, velocity * dt ); }
     }
     if ( context3D.keys.D )
     {
-        camera.moveLocal( RD.RIGHT, velocity * dt );
+        if( view === 'free' ) { camera.moveLocal( RD.RIGHT, velocity * dt ); }
+        else { walkingcamera.moveLocal( RD.RIGHT, velocity * dt ); }
     }
     if ( context3D.keys.Q )
     {
         if( !objectSelected )
-            camera.rotate(rotateSpeed * dt ,RD.UP);
+        {
+            if( view === 'free' ) { camera.rotate(rotateSpeed * dt ,RD.UP); }
+            else { walkingcamera.rotate(rotateSpeed * dt ,RD.UP); }
+        }
         else
         {
             objectSelected.rotate( rotateSpeed * dt, RD.UP );
@@ -965,13 +1023,15 @@ function moveCamera()
     if ( context3D.keys.E )
     {
         if( !objectSelected )
-            camera.rotate(-rotateSpeed * dt ,RD.UP);
+        {
+            if( view === 'free' ) { camera.rotate(-rotateSpeed * dt ,RD.UP); }
+            else { walkingcamera.rotate( -rotateSpeed * dt ,RD.UP); }
+        }
         else
         {
             objectSelected.rotate( -rotateSpeed * dt, RD.UP );
         }
     }
-
 };
 
 function freeView()
@@ -983,32 +1043,40 @@ function freeView()
 function walkingView()
 {
     view = "walking";
-    camera.lookAt( walkingMode.position, walkingMode.target, walkingMode.up );   
+    walkingcamera.lookAt( walkingMode.position, walkingMode.target, walkingMode.up );   
 };
 
-function saveFreeView()
-{
-    freeMode.position = camera.position;
-    freeMode.target = camera.target;
-    freeMode.up = camera.up;
-    console.log("SAVE FREE VIEW: " + freeMode.position);
-};
-
-function saveWalkingView()
-{
-    walkingMode.position = camera.position;
-    walkingMode.target = camera.target;
-    walkingMode.up = camera.up;
-    console.log("SAVE WALKING VIEW: " + walkingMode.position);
-};
-
+//TODO: UPDATE TO TAKE INFO WHEN NOT FIRST ENTERING THE ROOM
 function udpateRoomInfo( data )
 {
     for( var i = 0; i < data.length; i++ )
     {
-
     }
 };
+
+//create button options ---------------
+function showOptions()
+{
+    document.getElementById("dropdown").classList.toggle("show");
+};
+
+window.onclick = function( event )
+{
+    if( !event.target.matches('.dropbtn'))
+    {
+        var dropdowns = document.getElementsByClassName("dropdown-content");
+        for( var i = 0; i < dropdowns.length; i++ )
+        {
+            var openDropdowns = dropdowns[i];
+            if( openDropdowns.classList.contains('show'))
+            {
+                openDropdowns.classList.remove('show');
+            }
+        }
+    }
+};
+
+//end creat button options -----------
 
 //mouse class
 class Mouse {
