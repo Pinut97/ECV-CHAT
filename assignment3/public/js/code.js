@@ -1,5 +1,5 @@
 
-let canvas, context, mouse, objectID, objectSelected;
+let canvas, context, mouse, objectID, objectSelected, gizmo;
 let context3D, renderer, walkingcamera, camera, bg_color = [0, 0, 0, 1];
 
 let lineBtn = document.getElementById('lineBtn');
@@ -45,6 +45,7 @@ function init()
 
     mouse = new Mouse();
     scene = new RD.Scene();
+    gizmo = new RD.Gizmo();
 
     context3D = GL.create({width: canvas.width-1, height: canvas.height});
     renderer = new RD.Renderer( context3D );
@@ -94,6 +95,18 @@ function init()
     });
     objectID++;
     scene.root.addChild( floor );
+    /*
+    var cube = new RD.SceneNode({
+        type: "cube",
+        id: objectID,
+        position: target,
+        scaling: [100, 50, 100],
+        color: CUBE_COLOR,
+        mesh: "cube",
+        shader: "phong"
+    });
+    scene.root.addChild( cube );*/
+    gizmo.setTargets( [floor] );
 
     //createObject([0,0,0], false, 'sofa' );
     
@@ -128,9 +141,13 @@ function init()
         else
         {
             renderer.clear( bg_color );
-            if ( view === 'free' ){ renderer.render( scene, camera ); }
+            if ( view === 'free' )
+            { 
+                renderer.render( scene, camera ); 
+                gizmo.renderOutline( renderer, scene, camera ); 
+                renderer.render( scene, camera, [gizmo] ); 
+            }
             else{ renderer.render( scene, walkingcamera ); }
-            //resize3DWindow();
         }
     }
 
@@ -645,6 +662,8 @@ function create3DCube( target, addToDB )
         mesh: "cube",
         shader: "phong"
     });
+
+    //gizmo.setTargets( [cube] );
 
     var cube_object = {
         type: "cube",
