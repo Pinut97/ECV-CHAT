@@ -71,12 +71,12 @@ wss.on("connection", function(ws){
 				room.objects = await getRoomObjectsDB(room.name, ws);
 				console.log("Room objects: ", room.objects);
 
-				var message = {
+				var message_to_client = {
 					type: "initial_objects",
 					data: room.objects
 				};
 
-				clients[index].send(JSON.stringify(message));
+				clients[index].send(JSON.stringify(message_to_client));
 
 				room.user_ids.push( index );
 				rooms.push( room );
@@ -92,16 +92,12 @@ wss.on("connection", function(ws){
 		}
 		else if( message.type === "new_object" )
 		{
-			var element = {
-				room_name: room_name,
-				data: message.data
-			};
 
 			replyToOthers( message, msg );
-			console.log( room_index );
-			console.log( rooms );
+			console.log("The element: ", message.data);
 			console.log(rooms[room_index]);
-			rooms[room_index].objects.push( element );
+			rooms[room_index].objects.push( message.data );
+			console.log(rooms[room_index]);
 		}
 		else if( message.type === 'update_selectedObject_info')
 		{
@@ -132,8 +128,13 @@ wss.on("connection", function(ws){
 
 		if( room )
 		{
+			console.log("HAY ROOM");
 			updateRoomInfoDB( room, rooms[room_index].objects );
 			deleteRoom(room);
+		}
+		else 
+		{
+			console.log("NO HAY ROOM");
 		}
 
 		//eliminate it from connetions list
@@ -153,6 +154,7 @@ function replyToOthers( message, msg )
 	{
 		if( rooms[position].user_ids[i] !== message.id )
 		{
+			console.log("Client: " + i);
 			clients[i].send( msg );
 		}
 	}
@@ -207,7 +209,9 @@ function addUserToList( msg, index )
 	var newUser = {
 		id: index,
 		room_name: msg.room_name
-	}
+	};
+
+	console.log(newUser);
 	users.push( newUser );
 };
 
