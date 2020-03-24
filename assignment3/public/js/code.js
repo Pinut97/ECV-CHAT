@@ -56,8 +56,12 @@ function init()
 
     numObjects[0] = 0;
     numObjects[1] = 0;
+    numObjects[2] = 0;
+    numObjects[3] = 0;
     numbDeletedObjects[0] = 0;
     numbDeletedObjects[1] = 0;
+    numbDeletedObjects[2] = 0;
+    numbDeletedObjects[3] = 0;
 
     walkingMode = {
         position: [0, 80, 500],
@@ -233,6 +237,7 @@ function init()
                         {
                             if( node.id !== 0)  //to avoid selecting the floor
                             {
+
                                 objectSelected = node;
                                 setInspectorValues();
                             }
@@ -249,11 +254,10 @@ function init()
                     {
                         target = ray.collision_point;
                         var node = scene.testRay( ray, undefined, undefined, 0x1, true );
-                        if( node )
+                        if( node && node.id !== 0 )
                         {
                             eraseObject( node );
                         }
-                        //deleteObject( target ); TODO delete this function?
                     }
                 }
             }
@@ -271,10 +275,9 @@ function generateInitialObjects( initialObjects )
 		{
 			createWall(initialObjects[i].origin, initialObjects[i].final, false);
 		}
-		else if (initialObjects[i].type === "cube")
-		{
-			create3DCube(initialObjects[i].position, false);
-		}
+        else{
+            createObject( initialObjects[i].position, false, initialObjects[i].type );
+        }
 	}
 }
 
@@ -319,7 +322,8 @@ function connect()
         }
         else if ( message.type === 'new_object' )
         {
-            create3DCube( message.data.position, false );
+            console.log( "New object " + message.data );
+            createObject( message.data.position, false, message.data.type );
         }
         else if( message.type === 'object_deleted' )
         {
@@ -340,7 +344,8 @@ function sendUpdateInfo( ws )
                 id: objectSelected.id,
                 position: objectSelected.position,
                 rotation: objectSelected.rotation,
-                scale: objectSelected.scaling
+                scale: objectSelected.scaling,
+                type: findTypeObject( objectSelected.id )
             }
         }
         if( isOpen( ws )){ connection.send(JSON.stringify( info )); }
@@ -398,6 +403,14 @@ function show3d()
         renderer.canvas.style.display = 'none';
         planner.style.display = 'block';
         mode = '2D';
+    }
+};
+
+function findTypeObject( id )
+{
+    for( var i = 0; i < objects.length; i++ )
+    {
+        if( objects.id === id) return objects.type;
     }
 };
 
@@ -696,6 +709,8 @@ function createChair( target, addToDB )
     	connection.send(JSON.stringify( obj_message ));
     }
 
+    addObjectToList( o );
+
     numObjects[2]++;
     objects.push( o );
     scene.root.addChild( object );
@@ -736,6 +751,8 @@ function createSofa( target, addToDB )
     	connection.send(JSON.stringify( obj_message ));
     }
 
+    addObjectToList( o );
+
     numObjects[3]++;
     objects.push( o );
     scene.root.addChild( object );
@@ -775,6 +792,8 @@ function createShelf( target, addToDB )
     {	
     	connection.send(JSON.stringify( obj_message ));
     }
+
+    addObjectToList( o );
 
     numObjects[4]++;
     objects.push( o );
@@ -855,38 +874,6 @@ function eraseObject( node )
         }
     
         connection.send(JSON.stringify(message));   //send the id of the object to erase
-
-};
-
-//delete object for user using the target where he clicked
-//FIXME unused function
-function deleteObject( target )
-{
-    var aux_id; //to send the id of the object erased to the other users
-    for(var i = 0; i < objects.length; i++)
-    {
-        if(objects[i].type === "cube")
-        {
-            if ( 50 > vec3.distance( objects[i].position, target ))
-            {
-                aux_id = objects[i].id;
-                removeObjectFromScene(objects[i].id);   //delete from the scene to avoid rendering it
-                deleteObjectFromList(objects[i]);   //delete object from inspector list
-                objects.splice(i, 1);
-                numbDeletedObjects[1]++;
-            }
-        }
-    }
-
-    //send object deleted info to other users
-    var message = {
-        type: 'object_deleted',
-        id: user_ID,
-        data: aux_id,
-        room_name: roomName
-    }
-
-    connection.send(JSON.stringify(message));   //send the id of the object to erase
 
 };
 
@@ -1079,6 +1066,14 @@ function addObjectToList( object ) {
     else if(object.type === "cube") 
     {
         li.innerText = "cube" + "(" + numObjects[1] + ")";
+    }
+    else if( object.type === "chair" )
+    {
+        li.innerText = "chair" + "(" + numObjects[2] + ")";
+    }
+    else if( object.type === 'sofa' )
+    {
+        li.innerText = "sofa" + "(" + numObjects[3] + ")";
     }
     
     li.id = "objectID" + object.id;

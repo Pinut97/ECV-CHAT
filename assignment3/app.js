@@ -95,17 +95,21 @@ wss.on("connection", function(ws){
 
 			replyToOthers( message, msg );
 			console.log("The element: ", message.data);
-			console.log(rooms[room_index]);
 			rooms[room_index].objects.push( message.data );
-			console.log(rooms[room_index]);
 		}
 		else if( message.type === 'update_selectedObject_info')
 		{
+			console.log( "hello " );
 			var object_index = getObjectIndex(room_index, message.data.id);
-			rooms[room_index].objects[object_index].position = message.data.position;
-			rooms[room_index].objects[object_index].rotation = message.data.rotation;
-			rooms[room_index].objects[object_index].scale = message.data.scale;
-			replyToOthers( message, msg );
+			if( object_index !== -1 )
+			{
+				console.log( object_index );
+				console.log( rooms[room_index].objects );
+				rooms[room_index].objects[object_index].position = message.data.position;
+				rooms[room_index].objects[object_index].rotation = message.data.rotation;
+				rooms[room_index].objects[object_index].scale = message.data.scale;
+				replyToOthers( message, msg );
+			}
 		}
 		else if( message.type === 'object_deleted' )
 		{
@@ -320,15 +324,16 @@ function getRoomIndex(room_name)
 	}
 };
 
-function getObjectIndex(room_index, objectId)
+function getObjectIndex( room_index, objectId )
 {
-	for(var i = 0; i < rooms[room_index].objects; i++)
+	for( var i = 0; i < rooms[room_index].objects.length; i++ )
 	{
-		if(rooms[room_index].objects[i].id === objectId)
+		if( rooms[room_index].objects[i].id === objectId )
 		{
 			return i;
 		}
 	}
+	return -1;
 };
 
 /*
