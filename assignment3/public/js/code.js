@@ -95,17 +95,7 @@ function init()
     });
     objectID++;
     scene.root.addChild( floor );
-    /*
-    var cube = new RD.SceneNode({
-        type: "cube",
-        id: objectID,
-        position: target,
-        scaling: [100, 50, 100],
-        color: CUBE_COLOR,
-        mesh: "cube",
-        shader: "phong"
-    });
-    scene.root.addChild( cube );*/
+    
     gizmo.setTargets( [floor] );
 
     //createObject([0,0,0], false, 'sofa' );
@@ -163,6 +153,12 @@ function init()
                 camera.orbit( e.deltax * -0.1, RD.UP );
                 camera.orbit( e.deltay * 0.01, RD.LEFT);
                 camera.position = vec3.scaleAndAdd( camera.position, camera.position, RD.UP, e.deltay );
+                if( e.buttons & 4 )
+                {
+                    var dist = vec3.distance( this.camera.position, this.camera.target );
+					var d = dist / 1000.0;
+					this.camera.moveLocal([e.deltax * -d,e.deltay * d,0]);
+                }
             }
             else
             {
@@ -254,7 +250,7 @@ function init()
                         {
                             if( node.id !== 0)  //to avoid selecting the floor
                             {
-
+                                gizmo.setTargets( [node] );
                                 objectSelected = node;
                                 setInspectorValues();
                             }
@@ -662,8 +658,6 @@ function create3DCube( target, addToDB )
         mesh: "cube",
         shader: "phong"
     });
-
-    //gizmo.setTargets( [cube] );
 
     var cube_object = {
         type: "cube",
