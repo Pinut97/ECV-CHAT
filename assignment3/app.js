@@ -25,6 +25,7 @@ app.use(express.static(__dirname + "/public"));
 var rooms  = [];	//info about the rooms
 var users = [];
 var clients = [];	//connection itself
+var index_count = -1;
 
 //ROUTES
 app.get("/", function(req, res){
@@ -38,13 +39,18 @@ wss.on("connection", function(ws){
 
 	ws.send(JSON.stringify("Message from Server"));
 
-	var index = clients.push(ws) - 1;
+	var index = ++index_count;
+	ws["index"] = index; 
+	clients.push(ws);
+	//var index = ++index_count;
+	console.log("Length: " + clients.length);
 
 	//give id to new user
 	var initial_message = {
 		type: 'init',
 		data: index
-	}
+	};
+
 	ws.send(JSON.stringify(initial_message));
 
 	var room_name;
@@ -69,14 +75,14 @@ wss.on("connection", function(ws){
 
 				//get the objects of the room from the db
 				room.objects = await getRoomObjectsDB(room.name, ws);
-				console.log("Room objects: ", room.objects);
+				//console.log("Room objects: ", room.objects);
 
 				var message_to_client = {
 					type: "initial_objects",
 					data: room.objects
 				};
 
-				clients[index].send(JSON.stringify(message_to_client));
+				getClientById(ws.index).send(JSON.stringify(message_to_client));
 
 				room.user_ids.push( index );
 				rooms.push( room );
@@ -88,13 +94,14 @@ wss.on("connection", function(ws){
 			}
 
 			room_index = getRoomIndex( room_name );
+			console.log("INDEX: " + index);
 			addUserToList( message, index );
 		}
 		else if( message.type === "new_object" )
 		{
 
 			replyToOthers( message, msg );
-			console.log("The element: ", message.data);
+			//console.log("The element: ", message.data);
 			rooms[room_index].objects.push( message.data );
 		}
 		else if( message.type === 'update_selectedObject_info')
@@ -103,11 +110,10 @@ wss.on("connection", function(ws){
 			var object_index = getObjectIndex(room_index, message.data.id);
 			if( object_index !== -1 )
 			{
-				console.log( object_index );
-				console.log( rooms[room_index].objects );
 				rooms[room_index].objects[object_index].position = message.data.position;
 				rooms[room_index].objects[object_index].rotation = message.data.rotation;
 				rooms[room_index].objects[object_index].scale = message.data.scale;
+				//console.log(rooms[room_index].objects[object_index].position);
 				replyToOthers( message, msg );
 			}
 		}
@@ -120,7 +126,7 @@ wss.on("connection", function(ws){
 		{
 			if( index === message.id )
 			{
-				clients[message.id].send( msg );
+				getClientById(message.id).send( msg );
 			}
 		}
 	});
@@ -143,6 +149,7 @@ wss.on("connection", function(ws){
 
 		//eliminate it from connetions list
 		clients.splice( clients.indexOf( ws ), 1 );
+		console.log("Length after splice: " + clients.length);
 	});
 });
 
@@ -159,7 +166,7 @@ function replyToOthers( message, msg )
 		if( rooms[position].user_ids[i] !== message.id )
 		{
 			console.log("Client: " + i);
-			clients[i].send( msg );
+			getClientById(i).send( msg );
 		}
 	}
 };
@@ -215,7 +222,7 @@ function addUserToList( msg, index )
 		room_name: msg.room_name
 	};
 
-	console.log(newUser);
+	console.log("NEW USER: ", newUser);
 	users.push( newUser );
 };
 
@@ -308,9 +315,31 @@ function sendRoomInfo(room_name, index)
 				data: rooms[i].objects
 			};
 
-			clients[index].send(JSON.stringify(message));
+			var client = getClientById(index);
+
+			if(client !== false)
+			{
+				client.send(JSON.stringify(message));
+			}
+			else
+			{
+				console.log("Client not found.");
+			}
 		}
 	}
+};
+
+function getClientById(id)
+{
+	for(var i = 0; i < clients.length; i++)
+	{
+		if(clients[i].index === id)
+		{
+			return clients[i];
+		}
+	}
+
+	return false;
 };
 
 function getRoomIndex(room_name)
