@@ -143,9 +143,31 @@ function init()
 
     //mouse 3D actions
     context3D.captureMouse( true );
+    context3D.onmouse = function( e )
+    {
+        if( gizmo.onMouse(e))
+        {
+            if( e.ctrlKey && prev_pos)
+            {
+                var diff = vec3.sub(vec3.create(), gizmo.position, prev_pos);
+				camera.move(diff);
+				vec3.add( gizmo._last, gizmo._last, diff );
+            }
+        }
+    };
+
     context3D.onmousemove = function(e)
 	{
-		if( e.dragging )
+        if( gizmo.onMouse(e))
+        {
+            if( e.ctrlKey && prev_pos)
+            {
+                var diff = vec3.sub(vec3.create(), gizmo.position, prev_pos);
+				camera.move(diff);
+				vec3.add( gizmo._last, gizmo._last, diff );
+            }
+        }
+		else if( e.dragging )
 		{
             if( view !== 'walking' )
             {
@@ -195,6 +217,14 @@ function init()
     }
 
     context3D.captureKeys(true);
+
+    context3D.onkey = function(e)
+    {
+        if(e.code === "Escape")
+        {
+            gizmo.cancel();
+        }
+    };
 
     var target = null;
     context3D.onmouseup = function( e )
