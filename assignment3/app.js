@@ -42,8 +42,6 @@ wss.on("connection", function(ws){
 	var index = ++index_count;
 	ws["index"] = index; 
 	clients.push(ws);
-	//var index = ++index_count;
-	console.log("Length: " + clients.length);
 
 	//give id to new user
 	var initial_message = {
@@ -82,7 +80,16 @@ wss.on("connection", function(ws){
 					data: room.objects
 				};
 
-				getClientById(ws.index).send(JSON.stringify(message_to_client));
+				var client = getClientById(ws.index);
+
+				if(client !== false)
+				{
+					client.send(JSON.stringify(message_to_client));
+				}
+				else
+				{
+					console.log("room_name no client");
+				}
 
 				room.user_ids.push( index );
 				rooms.push( room );
@@ -94,7 +101,6 @@ wss.on("connection", function(ws){
 			}
 
 			room_index = getRoomIndex( room_name );
-			console.log("INDEX: " + index);
 			addUserToList( message, index );
 		}
 		else if( message.type === "new_object" )
@@ -106,7 +112,6 @@ wss.on("connection", function(ws){
 		}
 		else if( message.type === 'update_selectedObject_info')
 		{
-			console.log( "hello " );
 			var object_index = getObjectIndex(room_index, message.data.id);
 			if( object_index !== -1 )
 			{
@@ -126,7 +131,16 @@ wss.on("connection", function(ws){
 		{
 			if( index === message.id )
 			{
-				getClientById(message.id).send( msg );
+				var client = getClientById(message.id)
+
+				if(client !== false)
+				{
+					client.send( msg );
+				}
+				else
+				{
+					console.log("update_room_info no hay client");
+				}
 			}
 		}
 	});
@@ -134,7 +148,7 @@ wss.on("connection", function(ws){
 	ws.on("close", function(){
 		console.log("Client " + index + " left");
 		
-		var room = eliminateUser( index );
+		var room = eliminateUser( room_name, index );
 
 		if( room )
 		{
@@ -148,8 +162,9 @@ wss.on("connection", function(ws){
 		}
 
 		//eliminate it from connetions list
+		console.log("Eliminating: " + clients[clients.indexOf(ws)].index);
 		clients.splice( clients.indexOf( ws ), 1 );
-		console.log("Length after splice: " + clients.length);
+		console.log("After splice: ", clients);
 	});
 });
 
@@ -160,13 +175,24 @@ server.listen(9022, function(){
 //reply the message from user to other users
 function replyToOthers( message, msg )
 {
+	console.log("las rooms: ", rooms);
 	var position = returnRoomPositionByName( message.room_name );
 	for( var i = 0; i < rooms[position].user_ids.length; i++)
 	{
 		if( rooms[position].user_ids[i] !== message.id )
 		{
-			console.log("Client: " + i);
-			getClientById(i).send( msg );
+			console.log("Client: " + rooms[position].user_ids[i]);
+			var client = getClientById(rooms[position].user_ids[i]);
+			console.log("Replying to: ", client.index);
+
+			if(client !== false)
+			{
+				client.send(msg);
+			}
+			else
+			{
+				console.log("replyToOthers no hay cliente");
+			}
 		}
 	}
 };
@@ -181,6 +207,7 @@ function returnRoomPositionByName( name )
 			return i;
 		}
 	}
+
 	return null;
 };
 
@@ -193,6 +220,7 @@ function hasRoom( name )
 			return true;
 		}
 	}
+
 	return false;
 };
 
@@ -238,8 +266,9 @@ function findUserByIndex( index )
 };
 
 //eliminate user from the list of the room
-function eliminateUser( index )
+function eliminateUser( room_name, index )
 {
+	/*
 	for( var i = 0; i < rooms.length; i++ )
 	{
 		if ( rooms[i].name === users[index].room_name )
@@ -257,6 +286,25 @@ function eliminateUser( index )
 			}
 		}
 	}
+	*/
+	var room = rooms[returnRoomPositionByName(room_name)];
+	console.log("eliminateUser: ", room);
+
+	for(var i = 0; i < room.user_ids.length; i++)
+	{
+		if(room.user_ids[i] === index)
+		{
+			room.user_ids.splice(i, 1);
+		}
+
+		if(room.user_ids.length === 0)
+		{
+			return room.name;
+		}
+	}
+
+	console.log("QUE SUSEDE");
+	return false;
 };
 
 async function getRoomObjectsDB( room_name )
@@ -269,12 +317,10 @@ async function getRoomObjectsDB( room_name )
 			console.log(err);
 			return null;
 		} else {
-			console.log("getRoomObjectsDB: " + foundRoom.objects);
 			foundObjects = foundRoom.objects;
 		}
 	});
 
-	console.log( foundObjects );
 	if( foundObjects )
 	{
 		return foundObjects.objects;
@@ -323,7 +369,7 @@ function sendRoomInfo(room_name, index)
 			}
 			else
 			{
-				console.log("Client not found.");
+				console.log("sendRoomInfo no client");
 			}
 		}
 	}
@@ -339,6 +385,7 @@ function getClientById(id)
 		}
 	}
 
+	console.log("getClientById: " + id);
 	return false;
 };
 
