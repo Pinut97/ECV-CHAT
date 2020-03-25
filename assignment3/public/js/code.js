@@ -1,6 +1,6 @@
 
 let canvas, context, mouse, objectID, objectSelected, gizmo;
-let context3D, renderer, walkingcamera, camera, bg_color = [0, 0, 0, 1];
+let context3D, renderer, walkingcamera, camera, topdown_camera, bg_color = [0, 0, 0, 1];
 
 let lineBtn = document.getElementById('lineBtn');
 let eraseBtn = document.getElementById('eraseBtn');
@@ -23,6 +23,7 @@ let mode = '2D';
 let view;
 let walkingMode = null;    //object to store info about the walking view
 let freeMode = null;
+let topdownMode = null;
 canvas = document.querySelector( "canvas" );
 context = canvas.getContext( "2d" );
 
@@ -34,6 +35,8 @@ var velocity = 150;
 var rotateSpeed = 2;
 
 const CUBE_COLOR = [0.9, 0.9, 0.7, 1];
+const WALL_COLOR = [1, 0, 1, 1];
+const GREEN_COLOR = [0, 1, 0, 1];
 
 function init()
 {
@@ -50,7 +53,6 @@ function init()
     context3D = GL.create({width: canvas.width-1, height: canvas.height});
     renderer = new RD.Renderer( context3D );
     renderer.loadShaders("/shaders/shaders.txt");
-    //renderer.setDataFolder("textures");
     var wrapper = document.getElementById('wrapper');
     wrapper.appendChild( renderer.canvas);
     renderer.canvas.style.display = 'none';
@@ -76,9 +78,17 @@ function init()
         up: [0, 1, 0]
     };
 
+    topdownMode = {
+        position: [0, 1000, 0],
+        target: [0, 0, 0],
+        up: [0, 0, 1]
+    };
+
     camera = new RD.Camera();
     camera.perspective( 60, gl.canvas.width / gl.canvas.height, 1, 10000 );
     walkingcamera = new RD.Camera();
+    walkingcamera.perspective( 60, gl.canvas.width / gl.canvas.height, 1, 10000 );
+    topdown_camera = new RD.Camera();
     walkingcamera.perspective( 60, gl.canvas.width / gl.canvas.height, 1, 10000 );
     freeView();
 
@@ -96,222 +106,228 @@ function init()
     objectID++;
     scene.root.addChild( floor );
     
-    //gizmo.setTargets( [floor] );
-
-    //createObject([0,0,0], false, 'sofa' );
-    
-    //update 3D
-    context3D.onupdate = function( dt )
-    {
-        computeDt();
-        scene.update(dt);
-        sendUpdateInfo( connection );
-        if( context3D.keys.Z )
-        {
-            if(view === "walking")
-            {
-                freeView();
-            }
-            else
-            {
-                walkingView();
-            }   
-        }
-
-        moveCamera();
-        //document.getElementsById('translateX').value;
-    }
-    //draw 3D
-    context3D.ondraw = function()
-    {
-        if(mode === "2D")
-        {
-            draw2D();
-        }
-        else
-        {
-            renderer.clear( bg_color );
-            if ( view === 'free' )
-            { 
-                renderer.render( scene, camera ); 
-                gizmo.renderOutline( renderer, scene, camera ); 
-                renderer.render( scene, camera, [gizmo] ); 
-            }
-            else{ renderer.render( scene, walkingcamera ); }
-        }
-    }
+    context3D.onupdate = update;
+    context3D.ondraw = render;
 
     //mouse 3D actions
     context3D.captureMouse( true );
-    context3D.onmouse = function( e )
-    {
-        if( gizmo.onMouse(e))
-        {
-            if( e.ctrlKey && prev_pos)
-            {
-                var diff = vec3.sub(vec3.create(), gizmo.position, prev_pos);
-				camera.move(diff);
-				vec3.add( gizmo._last, gizmo._last, diff );
-            }
-        }
-    };
-
-    context3D.onmousemove = function(e)
-	{
-        if( gizmo.onMouse(e))
-        {
-            if( e.ctrlKey && prev_pos)
-            {
-                var diff = vec3.sub(vec3.create(), gizmo.position, prev_pos);
-				camera.move(diff);
-				vec3.add( gizmo._last, gizmo._last, diff );
-            }
-        }
-		else if( e.dragging )
-		{
-            if( view !== 'walking' )
-            {
-                //orbit camera around
-                camera.orbit( e.deltax * -0.1, RD.UP );
-                camera.orbit( e.deltay * 0.01, RD.LEFT);
-                camera.position = vec3.scaleAndAdd( camera.position, camera.position, RD.UP, e.deltay );
-                if( e.buttons & 4 )
-                {
-                    var dist = vec3.distance( this.camera.position, this.camera.target );
-					var d = dist / 1000.0;
-					this.camera.moveLocal([e.deltax * -d,e.deltay * d,0]);
-                }
-            }
-            else
-            {
-                walkingcamera.rotate( -e.deltax * 0.01, RD.UP );
-            }
-        }
-        else if( objectSelected === null && selectedTool === "select" )
-        {
-            var ray = camera.getRay( e.canvasx, e.canvasy )
-            if( ray.testPlane( RD.ZERO, RD.UP) )
-            {
-                target = ray.collision_point;
-                returnObjectWhenHoovered( target );
-            }
-        }
-        else if( objectSelected !== null && selectedTool === "select" )
-        {
-            var ray = camera.getRay( e.canvasx, e.canvasy );
-            if(ray.testPlane( RD.ZERO, RD.UP))
-            {
-                target = ray.collision_point;
-                target[1] += 24;
-                objectSelected.position = target;
-                getObjectFromObjectList(objectSelected.id).position = target;
-                setInspectorValues();
-            }
-        }
-    }
-
-    context3D.onmousewheel = function(e)
-	{
-		//move camera forward
-		camera.position = vec3.scale( camera.position, camera.position, e.wheel < 0 ? 1.1 : 0.9 );
-    }
+    context3D.onmouse = onmouse;
+    context3D.onmousemove = mousemove;
+    context3D.onmousewheel = mousewheel;
 
     context3D.captureKeys(true);
+    context3D.onkey = pressingKeys;
+    context3D.onmouseup = mouseup;
+    //call for 3d loop
+    context3D.animate();
+};
 
-    context3D.onkey = function(e)
+function update()
+{
+    computeDt();
+    sendUpdateInfo( connection );
+    if( objectSelected ) setInspectorValues();
+    if( context3D.keys.Z )
     {
-        if(e.code === "Escape")
+        if(view === "walking")
         {
-            gizmo.cancel();
+            freeView();
         }
-    };
+        else
+        {
+            walkingView();
+        }   
+    }
 
-    var target = null;
-    context3D.onmouseup = function( e )
+    moveCamera();
+};
+
+function render()
+{
+    if(mode === "2D")
     {
-        if(e.click_time < 200) //fast click
-		{
-			//compute collision with floor plane
-			var ray = camera.getRay( e.canvasx, e.canvasy );
-            if( ray.testPlane( RD.ZERO, RD.UP ) ) //collision
-            {
-                target = ray.collision_point;
-                //target[0]+= canvas.width * 0.5;
-                //target[2]+= canvas.height * 0.5;
-                if( selectedTool === 'cube' )
-                {
-                    create3DCube( [target[0] + canvas.width * 0.5, target[2] + canvas.height * 0.5], true ); //convert to 2D coordinates
-                    target = null;
-                }
-                else if( selectedTool === 'chair' )
-                {
-                    createObject([target[0] + canvas.width * 0.5, target[2] + canvas.height * 0.5], true, 'chair');
-                    target = null;
-                }
-                else if( selectedTool === 'sofa' )
-                {
-                    createObject( [target[0] + canvas.width * 0.5, target[2] + canvas.height * 0.5], true, 'sofa' );
-                    target = null;
-                }
-                else if (selectedTool === 'line')
-                {
-                    target[0]+= canvas.width * 0.5;
-                    target[2]+= canvas.height * 0.5;
+        draw2D();
+    }
+    else
+    {
+        renderer.clear( bg_color );
+        if ( view === 'free' )
+        { 
+            renderer.render( scene, camera ); 
+            gizmo.renderOutline( renderer, scene, camera ); 
+            renderer.render( scene, camera, [gizmo] ); 
+        }
+        else if( view === "topdown" )
+        {
+            renderer.render( scene, topdown_camera ); 
+            gizmo.renderOutline( renderer, scene, topdown_camera ); 
+            renderer.render( scene, topdown_camera, [gizmo] ); 
+        }
+        else{ renderer.render( scene, walkingcamera ); }
+    }
+};
 
-                    if( mouse.memory.x === 0 && mouse.memory.y === 0 )
+function mouseup( e )
+{
+    var target = null;
+    if(e.click_time < 200) //fast click
+    {
+        //compute collision with floor plane
+        var ray = camera.getRay( e.canvasx, e.canvasy );
+        if( ray.testPlane( RD.ZERO, RD.UP ) ) //collision
+        {
+            target = ray.collision_point;
+            if( selectedTool === 'cube' )
+            {
+                createObject( [target[0] + canvas.width * 0.5, target[2] + canvas.height * 0.5], true, 'cube'); //convert to 2D coordinates
+                target = null;
+            }
+            else if( selectedTool === 'chair' )
+            {
+                createObject([target[0] + canvas.width * 0.5, target[2] + canvas.height * 0.5], true, 'chair');
+                target = null;
+            }
+            else if( selectedTool === 'sofa' )
+            {
+                createObject( [target[0] + canvas.width * 0.5, target[2] + canvas.height * 0.5], true, 'sofa' );
+                target = null;
+            }
+            else if (selectedTool === 'line')
+            {
+                target[0]+= canvas.width * 0.5;
+                target[2]+= canvas.height * 0.5;
+
+                if( mouse.memory.x === 0 && mouse.memory.y === 0 )
+                {
+                    mouse.memory.x = target[0];
+                    mouse.memory.y = target[2];
+                }
+                else
+                {
+                    createWall({x: target[0], y: target[2]}, {x: mouse.memory.x, y: mouse.memory.y}, true);
+                    mouse.memory.x = target[0];
+                    mouse.memory.y = target[2];
+                }
+            }
+            else if(selectedTool === 'erase')
+            {
+                if( objectSelected === null )
+                {
+                    target = ray.collision_point;
+                    var node = scene.testRay( ray, undefined, undefined, 0x1, true );
+                    if( node && node.id !== 0 )
                     {
-                        mouse.memory.x = target[0];
-                        mouse.memory.y = target[2];
-                    }
-                    else
-                    {
-                        createWall({x: target[0], y: target[2]}, {x: mouse.memory.x, y: mouse.memory.y}, true);
-                        mouse.memory.x = target[0];
-                        mouse.memory.y = target[2];
+                        eraseObject( node );
+                        scene.root.children.splice( scene.root.children.indexOf(node), 1 );
                     }
                 }
-                else if( selectedTool === 'select' )
+            }
+            //default case, its the selection button
+            else
+            {
+                var node = scene.testRay( ray, undefined, undefined, 0x1, true );
+                if( node )
                 {
-                    if(objectSelected === null)
-                    {
-                        target = ray.collision_point;
-                        var node = scene.testRay( ray, undefined, undefined, 0x1, true );
-                        if( node )
-                        {
-                            if( node.id !== 0)  //to avoid selecting the floor
-                            {
-                                gizmo.setTargets( [node] )
-                                objectSelected = node;
-                                setInspectorValues();
-                            }
-                        }
-                        else
-                        {
-                            gizmo.setTargets( null );
-                        }
-                    }
-                    else 
-                    {   
-                        objectSelected = null;
-                    }
+                    gizmo.setTargets( [node] );
+                    objectSelected = node;
+                    setInspectorValues();
                 }
-                else if(selectedTool === 'erase')
+                else
                 {
-                    if( objectSelected === null )
-                    {
-                        target = ray.collision_point;
-                        var node = scene.testRay( ray, undefined, undefined, 0x1, true );
-                        if( node && node.id !== 0 )
-                        {
-                            eraseObject( node );
-                        }
-                    }
+                    objectSelected = null;
+                    gizmo.setTargets( null );
                 }
             }
         }
     }
-    //call for 3d loop
-    context3D.animate();
+};
+
+function mousemove( e )
+{
+    if( gizmo.onMouse(e))
+    {
+        if( e.ctrlKey && prev_pos)
+        {
+            var diff = vec3.sub(vec3.create(), gizmo.position, prev_pos);
+            camera.move(diff);
+            vec3.add( gizmo._last, gizmo._last, diff );
+        }
+    }
+    else if( e.dragging )
+    {
+        if( view !== 'walking' )
+        {
+            //orbit camera around
+            camera.orbit( e.deltax * -0.1, RD.UP );
+            camera.orbit( e.deltay * 0.01, RD.LEFT);
+            camera.position = vec3.scaleAndAdd( camera.position, camera.position, RD.UP, e.deltay );
+            if( e.buttons & 4 )
+            {
+                var dist = vec3.distance( this.camera.position, this.camera.target );
+                var d = dist / 1000.0;
+                this.camera.moveLocal([e.deltax * -d,e.deltay * d,0]);
+            }
+        }
+        else
+        {
+            walkingcamera.rotate( -e.deltax * 0.01, RD.UP );
+        }
+    }
+    else if( !selectedTool )
+    {
+        var ray = camera.getRay( e.canvasx, e.canvasy );
+        var node = scene.testRay( ray, undefined, undefined, 0x1, true );
+        if( node )
+        {
+            node.color = GREEN_COLOR;
+        }
+        else
+        {
+            returnObjectsToColors();
+        }
+
+    }
+};
+
+function onmouse( e )
+{
+    if( gizmo.onMouse(e))
+    {
+        if( e.ctrlKey && prev_pos)
+        {
+            var diff = vec3.sub(vec3.create(), gizmo.position, prev_pos);
+            camera.move(diff);
+            vec3.add( gizmo._last, gizmo._last, diff );
+        }
+    }
+};
+
+function mousewheel( e )
+{
+    //move camera forward
+    if( view === 'free' ) camera.position = vec3.scale( camera.position, camera.position, e.wheel < 0 ? 1.1 : 0.9 );
+    else if( view === 'topdown' ) topdown_camera.position = vec3.scale( topdown_camera.position, topdown_camera.position, e.wheel < 0 ? 1.1 : 0.9 );
+
+};
+
+function pressingKeys( e )
+{
+    if(e.code == "Escape")
+    {
+        gizmo.cancel();
+    }
+    else if( e.code == "Delete" )
+    {
+        if( objectSelected.id !== 0 ) //floor can't be erased
+        {
+            eraseObject( objectSelected );
+            gizmo.removeTargetsFromScene();
+        }
+    }
+    else if( e.code == "Digit1" )
+    {
+        topdownView();
+    }
 };
 
 function generateInitialObjects( initialObjects )
@@ -411,6 +427,14 @@ function computeDt()
     last = now;
 };
 
+function returnObjectsToColors()
+{
+    for( var i = 0; i < scene.root.children.length; i++ )
+    {
+        scene.root.children[i].color = CUBE_COLOR;
+    }
+};
+
 function draw2D()
 {
     context.clearRect(0, 0, canvas.width, canvas.height);
@@ -442,7 +466,6 @@ function show3d()
         mode = '3D';
         planner.style.display = 'none';
         renderer.canvas.style.display = 'block';
-        //document.body.appendChild( renderer.canvas );
     }
     else
     {
@@ -467,7 +490,7 @@ function updateObjectMovement( message )
     var object = retrieveObjectFromScene( message.data.id );
     object.position = message.data.position;
     object.rotation = message.data.rotation;
-    object.scale = message.data.scale;
+    object.scaling = message.data.scale;
 };
 
 document.getElementById("lineBtn").addEventListener( 'click', function(){
@@ -476,7 +499,6 @@ document.getElementById("lineBtn").addEventListener( 'click', function(){
         this.style.border = "solid #0000FF";
         eraseBtn.style.border = "none";
         cubeBtn.style.border = "none";
-        selectBtn.style.noder = "none";
     } 
     else {
         selectedTool = null;
@@ -493,7 +515,6 @@ document.getElementById("eraseBtn").addEventListener( 'click', function(){
         this.style.border = "solid #0000FF";
         lineBtn.style.border = "none";
         cubeBtn.style.border = "none";
-        selectBtn.style.border = "none";
     }
     else {
         selectedTool = null;
@@ -509,7 +530,6 @@ document.getElementById("cubeBtn").addEventListener( 'click', function(){
         this.style.border = "solid #0000FF";
         lineBtn.style.border = "none";
         eraseBtn.style.border = "none";
-        selectBtn.style.border = "none";
     }
     else{
         selectedTool = null;
@@ -524,7 +544,6 @@ document.getElementById("chairBtn").addEventListener( 'click', function(){
         this.style.border = "solid #0000FF";
         lineBtn.style.border = "none";
         eraseBtn.style.border = "none";
-        selectBtn.style.border = "none";
     }
     else{
         selectedTool = null;
@@ -539,26 +558,9 @@ document.getElementById("sofaBtn").addEventListener( 'click', function(){
         this.style.border = "solid #0000FF";
         lineBtn.style.border = "none";
         eraseBtn.style.border = "none";
-        selectBtn.style.border = "none";
     }
     else{
         selectedTool = null;
-        this.style.border = 'none';
-    }
-});
-
-document.getElementById("selectBtn").addEventListener( 'click', function(){
-    if( selectedTool !== 'select' )
-    {
-        selectedTool = 'select';
-        this.style.border = "solid #0000FF";
-        lineBtn.style.border = 'none';
-        eraseBtn.style.border = 'none';
-        cubeBtn.style.border = "none";
-    }
-    else{
-        selectedTool = null;
-        objectSelected = null;
         this.style.border = 'none';
     }
 });
@@ -574,7 +576,6 @@ function resizeWindow()
 
 function resize3DWindow()
 {
-    //resizeWindow();
     context3D.canvas.width = canvas.width;
     context3D.canvas.height = canvas.height;
 };
@@ -678,10 +679,6 @@ function createWall( origin, final, addToDB )
 
 function create3DCube( target, addToDB )
 {
-	if( addToDB )
-	{
-		target = [target[0] - canvas.width * 0.5, 24, target[1] - canvas.height * 0.5];
-	}
     
     var cube = new RD.SceneNode( {
         type: "cube",
@@ -871,6 +868,7 @@ function createObject( target, addToDB, type )
     {
         createShelf( target, addToDB );
     }
+    selectedTool = null;
 }
 
 function drawCube( x, y )
@@ -908,7 +906,6 @@ function eraseObject( node )
             aux_id = node.id;
             deleteObjectFromList( objects[i] ); //delete it from the inspector list
             objects.splice( i, 1 );             //delete it from the objects list
-            scene.root.children.splice( scene.root.children.indexOf( node ), 1 );   //delete it from the scene nodes list
         }
     }
 
@@ -985,17 +982,9 @@ function returnObjectsToNormalColor( object, type )
     {
         object.color = CUBE_COLOR;  //only changing node color, what about list objects color?
     }
-};
-
-//FIXME unused function
-//select object from 3D by the target point of the ray
-function selectObject( target )
-{
-    var distance = 50;
-    if( checkDistanceWithObjects( target, distance ) !== 'undefined' )
+    else if ( type === 'wall' )
     {
-        objectSelected = retrieveObjectFromScene( checkDistanceWithObjects( target, distance ).id );
-        setInspectorValues();
+        object.color = WALL_COLOR;
     }
 };
 
@@ -1083,23 +1072,12 @@ function setInspectorValues()
 
 };
 
-//change object values from inspector
-function changeInspectorValues( )
-{
-    if( objectSelected != null)
-    {
-        //objectSelected.position[0]
-        //var a = document.getElementById('translateX');
-    }
-};
-
 function addObjectToList( object ) {
     var ul = document.getElementById("object-list");
     var li = document.createElement("li");
     
     li.onclick = function(){
-        selectedTool = 'select';
-        selectBtn.style.border = "solid #0000FF";
+        selectedTool = null;
         lineBtn.style.border = 'none';
         eraseBtn.style.border = 'none';
         cubeBtn.style.border = "none";
@@ -1138,46 +1116,36 @@ function moveCamera()
     if( context3D.keys.W )
     {
         if( view === 'free' ) { camera.move( camera.getFront(), velocity * dt ); }
+        else if( view === 'topdown' ){ topdown_camera.moveLocal( RD.UP, velocity * dt ); }
         else { walkingcamera.move( walkingcamera.getFront(), velocity * dt ) }
     }
     if ( context3D.keys.S )
     {
         if( view === 'free' ) { camera.move( camera.getFront(), -velocity * dt ); }
+        else if( view === 'topdown' ){ topdown_camera.moveLocal( RD.DOWN, velocity * dt ); }
         else { walkingcamera.move( walkingcamera.getFront(), -velocity * dt ) }
     }
     if ( context3D.keys.A )
     {
         if( view === 'free' ) { camera.moveLocal( RD.LEFT, velocity * dt ); }
+        else if( view === 'topdown' ){ topdown_camera.moveLocal( RD.LEFT, velocity * dt ); }
         else { walkingcamera.moveLocal( RD.LEFT, velocity * dt ); }
     }
     if ( context3D.keys.D )
     {
         if( view === 'free' ) { camera.moveLocal( RD.RIGHT, velocity * dt ); }
+        else if( view === 'topdown' ){ topdown_camera.moveLocal( RD.RIGHT, velocity * dt ); }
         else { walkingcamera.moveLocal( RD.RIGHT, velocity * dt ); }
     }
     if ( context3D.keys.Q )
     {
-        if( !objectSelected )
-        {
-            if( view === 'free' ) { camera.rotate(rotateSpeed * dt ,RD.UP); }
-            else { walkingcamera.rotate(rotateSpeed * dt ,RD.UP); }
-        }
-        else
-        {
-            objectSelected.rotate( rotateSpeed * dt, RD.UP );
-        }
+        if( view === 'free' ) { camera.rotate(rotateSpeed * dt ,RD.UP); }
+        else { walkingcamera.rotate(rotateSpeed * dt ,RD.UP); }
     }
     if ( context3D.keys.E )
     {
-        if( !objectSelected )
-        {
-            if( view === 'free' ) { camera.rotate(-rotateSpeed * dt ,RD.UP); }
-            else { walkingcamera.rotate( -rotateSpeed * dt ,RD.UP); }
-        }
-        else
-        {
-            objectSelected.rotate( -rotateSpeed * dt, RD.UP );
-        }
+        if( view === 'free' ) { camera.rotate(-rotateSpeed * dt ,RD.UP); }
+        else { walkingcamera.rotate( -rotateSpeed * dt ,RD.UP); }
     }
 };
 
@@ -1185,20 +1153,18 @@ function freeView()
 {
     view = "free";
     camera.lookAt( freeMode.position, freeMode.target, freeMode.up );
-}
+};
+
+function topdownView()
+{
+    view = "topdown";
+    topdown_camera.lookAt( topdownMode.position, topdownMode.target, topdownMode.up );
+};
 
 function walkingView()
 {
     view = "walking";
     walkingcamera.lookAt( walkingMode.position, walkingMode.target, walkingMode.up );   
-};
-
-//TODO: UPDATE TO TAKE INFO WHEN NOT FIRST ENTERING THE ROOM
-function udpateRoomInfo( data )
-{
-    for( var i = 0; i < data.length; i++ )
-    {
-    }
 };
 
 //create button options ---------------
@@ -1270,7 +1236,7 @@ class Mouse {
             }
             else if( selectedTool === 'cube' )
             {
-                create3DCube( [this.x, this.y], true);
+                createObject( [this.x, this.y], true, 'cube');
             }
             this.pressed = "false";
         }

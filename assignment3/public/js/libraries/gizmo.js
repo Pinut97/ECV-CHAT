@@ -558,7 +558,7 @@
     {
         this._selected_action = null;
         this.transform = this.click_transform;
-        this.updateTarget();
+        //this.updateTarget();
     }
     
     //rendering ********************************

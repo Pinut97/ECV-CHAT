@@ -175,16 +175,12 @@ server.listen(9022, function(){
 //reply the message from user to other users
 function replyToOthers( message, msg )
 {
-	console.log("las rooms: ", rooms);
 	var position = returnRoomPositionByName( message.room_name );
 	for( var i = 0; i < rooms[position].user_ids.length; i++)
 	{
 		if( rooms[position].user_ids[i] !== message.id )
 		{
-			console.log("Client: " + rooms[position].user_ids[i]);
 			var client = getClientById(rooms[position].user_ids[i]);
-			console.log("Replying to: ", client.index);
-
 			if(client !== false)
 			{
 				client.send(msg);
