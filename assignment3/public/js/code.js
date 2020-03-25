@@ -96,7 +96,7 @@ function init()
     objectID++;
     scene.root.addChild( floor );
     
-    gizmo.setTargets( [floor] );
+    //gizmo.setTargets( [floor] );
 
     //createObject([0,0,0], false, 'sofa' );
     
@@ -280,10 +280,14 @@ function init()
                         {
                             if( node.id !== 0)  //to avoid selecting the floor
                             {
-                                gizmo.setTargets( [node] );
+                                gizmo.setTargets( [node] )
                                 objectSelected = node;
                                 setInspectorValues();
                             }
+                        }
+                        else
+                        {
+                            gizmo.setTargets( null );
                         }
                     }
                     else 
