@@ -378,7 +378,7 @@ function connect()
 
     	if(message.type === "initial_objects")
     	{
-                generateInitialObjects( message.data );            
+            generateInitialObjects( message.data );            
         }
         else if ( message.type === 'init' )
         {
@@ -391,7 +391,7 @@ function connect()
         }
         else if ( message.type === 'new_object' )
         {
-            console.log( "New object " + message.data );
+            console.log( "New object ", message.data );
             if( message.data.type === 'wall' )
             {
                 createWall( message.data.origin, message.data.final, false, message.data );
@@ -637,6 +637,7 @@ function createWall( origin, final, addToDB, data )
     {
         pos = data.position;
         scale = data.scaling;
+        rot = data.rotation;
     }
     else{
             //vector between the two points
@@ -663,13 +664,17 @@ function createWall( origin, final, addToDB, data )
         var angleInRad = Math.acos( dotProduct );
 
         pos = [middlePoint.x - canvas.width * 0.5, 55, middlePoint.y - canvas.height * 0.5]
+        rot = [0, 0, 0, 1]
         scale = [vectorLength(vector), 115, 3]
     }
+
+  
 
     var wall = new RD.SceneNode({
         type: "wall",
         id: objectID,
         position: pos,
+        rotation: rot,
         scaling: scale,
         color: [1, 0, 1, 1],
         mesh: "cube",
@@ -677,6 +682,11 @@ function createWall( origin, final, addToDB, data )
         shader: "phong_texture"
     });
 
+    if(!data)
+    {
+        wall.rotate( angleInRad, RD.UP, false );
+    }
+    
     var wall_object = {
         type: "wall",
         id: wall.id,
@@ -687,23 +697,25 @@ function createWall( origin, final, addToDB, data )
         final: final
     };
 
-    var wall_message = {
-        type: "new_object",
-        id: user_ID,
-        room_name: roomName,
-        data: wall_object
-    };
+    console.log("Rotation: " + wall_object.rotation);
 
     objects.push(wall_object);
     numObjects[0]++;
     objectID++;
-    wall.rotate( angleInRad, RD.UP, false );
+    
     scene.root.addChild( wall );
 
     addObjectToList(wall_object);
 
     if(addToDB === true)
     {
+        var wall_message = {
+            type: "new_object",
+            id: user_ID,
+            room_name: roomName,
+            data: wall_object
+        };
+
         console.log("send wall to sever");
     	connection.send(JSON.stringify(wall_message));
     }

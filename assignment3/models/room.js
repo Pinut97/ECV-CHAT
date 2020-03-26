@@ -1,12 +1,6 @@
 var mongoose = require("mongoose");
 
-var elementSchema = new mongoose.Schema({
-	type: String,
-	id: Number,
-	position: [Number],
-	rotation: [Number],
-	scaling: [Number],
-});
+var elementSchema = require("./element");
 
 var roomSchema = new mongoose.Schema({
 	name: String,

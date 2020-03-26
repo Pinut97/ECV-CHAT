@@ -8,8 +8,8 @@ var express 	= require("express"),
  	wss 		= new WebSocket.Server({ server })
 
 //requiring models
-var Room 	= require("./models/room"),
-	Element = require("./models/element")
+var Room 	= require("./models/room");
+	//Element = require("./models/element")
 
 //requiring routes
 var roomRoutes = require("./routes/rooms")
@@ -74,6 +74,8 @@ wss.on("connection", function(ws){
 				//get the objects of the room from the db
 				room.objects = await getRoomObjectsDB(room.name, ws);
 
+				console.log("Room Objects: ", room.objects);
+
 				var message_to_client = {
 					type: "initial_objects",
 					data: room.objects
@@ -104,8 +106,11 @@ wss.on("connection", function(ws){
 		}
 		else if( message.type === "new_object" )
 		{
-			replyToOthers( message, msg );
+			console.log(message.data);
+			console.log("room:", rooms[room_index].objects);
 			rooms[room_index].objects.push( message.data );
+			console.log("room2:", rooms[room_index].objects);
+			replyToOthers( message, msg );
 		}
 		else if( message.type === 'update_selectedObject_info')
 		{
@@ -157,9 +162,7 @@ wss.on("connection", function(ws){
 		}
 
 		//eliminate it from connetions list
-		console.log("Eliminating: " + clients[clients.indexOf(ws)].index);
 		clients.splice( clients.indexOf( ws ), 1 );
-		console.log("After splice: ", clients);
 	});
 });
 
@@ -225,6 +228,7 @@ function addUserToExistingRoom( room_name, user_id )
 //Updates the elements of a room
 function updateRoomInfoDB( room_name, room_objects )
 {
+	console.log(room_objects);
 	Room.update({name: room_name}, {$set: {objects: room_objects}}, function(err, room){
 		if(err){
 			console.log(err);
