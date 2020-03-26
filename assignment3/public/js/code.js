@@ -24,6 +24,8 @@ let view;
 let walkingMode = null;    //object to store info about the walking view
 let freeMode = null;
 let topdownMode = null;
+let grid = null;
+let outlinedObject = null;
 canvas = document.querySelector( "canvas" );
 context = canvas.getContext( "2d" );
 
@@ -49,6 +51,10 @@ function init()
     mouse = new Mouse();
     scene = new RD.Scene();
     gizmo = new RD.Gizmo();
+    grid = RD.Factory( 'grid' );
+    grid.layers = 1<<700;
+    grid.color = [0.8, 0.8, 0.8]
+    scene.root.addChild( grid );
 
     context3D = GL.create({width: canvas.width-1, height: canvas.height});
     renderer = new RD.Renderer( context3D );
@@ -79,9 +85,9 @@ function init()
     };
 
     topdownMode = {
-        position: [0, 1000, 0],
+        position: [0, 1500, 0],
         target: [0, 0, 0],
-        up: [0, 0, 1]
+        up: [0, 0, -1]
     };
 
     camera = new RD.Camera();
@@ -126,6 +132,8 @@ function update()
 {
     computeDt();
     sendUpdateInfo( connection );
+    if( outlinedObject )
+        gizmo.renderOutline( renderer, scene, camera, [outlinedObject] );
     if( objectSelected ) setInspectorValues();
     if( context3D.keys.Z )
     {
@@ -204,7 +212,7 @@ function mouseup( e )
                 }
                 else
                 {
-                    createWall({x: target[0], y: target[2]}, {x: mouse.memory.x, y: mouse.memory.y}, true);
+                    createWall({x: target[0], y: target[2]}, {x: mouse.memory.x, y: mouse.memory.y}, true, null);
                     mouse.memory.x = target[0];
                     mouse.memory.y = target[2];
                 }
@@ -280,9 +288,12 @@ function mousemove( e )
         if( node )
         {
             node.color = GREEN_COLOR;
+            outlinedObject = node;
+            gizmo.renderOutline( renderer, scene, camera, [node] );
         }
         else
         {
+            outlinedObject = null;
             returnObjectsToColors();
         }
 
@@ -336,7 +347,7 @@ function generateInitialObjects( initialObjects )
 	{
 		if(initialObjects[i].type === "wall")
 		{
-			createWall(initialObjects[i].origin, initialObjects[i].final, false);
+			createWall( initialObjects[i].origin, initialObjects[i].final, false, initialObjects[i].position );
 		}
         else{
             createObject( initialObjects[i].position, false, initialObjects[i].type );
@@ -380,10 +391,18 @@ function connect()
         }
         else if ( message.type === 'new_object' )
         {
-            createObject( message.data.position, false, message.data.type );
+            console.log( "New object " + message.data );
+            if( message.data.type === 'wall' )
+            {
+                createWall( message.data.origin, message.data.final, false, message.data.postion );
+            }
+            else{
+                createObject( message.data.position, false, message.data.type );
+            }
         }
         else if( message.type === 'object_deleted' )
         {
+            deleteObjectFromOutside( message.data );
             removeObjectFromScene( message.data );
         }
     };
@@ -610,24 +629,32 @@ function drawLine ( origin, final )
     context.stroke();
 };
 
-function createWall( origin, final, addToDB )
+function createWall( origin, final, addToDB, position )
 {
-    //vector between the two points
-    var vector = {
-        x: final.x - origin.x,
-        y: final.y - origin.y
-    }
-
-    //save the position where wall is gonna create
-    var middlePoint = {
-        x: origin.x + ( vector.x * 0.5 ), 
-        y: origin.y + ( vector.y * 0.5 )
-    }
-
-    if( final.y > origin.y ) 
+    var pos;
+    if( position )
     {
-        vector.y = -vector.y;
-        vector.x = -vector.x;
+        pos = position;
+    }
+    else{
+            //vector between the two points
+        var vector = {
+            x: final.x - origin.x,
+            y: final.y - origin.y
+            }
+
+        //save the position where wall is gonna create
+        var middlePoint = {
+            x: origin.x + ( vector.x * 0.5 ), 
+            y: origin.y + ( vector.y * 0.5 )
+        }
+
+        if( final.y > origin.y ) 
+        {
+            vector.y = -vector.y;
+            vector.x = -vector.x;
+        }
+        pos = [middlePoint.x - canvas.width * 0.5, 55, middlePoint.y - canvas.height * 0.5]
     }
 
     var normalized = normalize( vector );
@@ -639,7 +666,7 @@ function createWall( origin, final, addToDB )
     var wall = new RD.SceneNode({
         type: "wall",
         id: objectID,
-        position: [middlePoint.x - canvas.width * 0.5, 55, middlePoint.y - canvas.height * 0.5],
+        position: pos,
         scaling: [vectorLength(vector), 115, 3],
         color: [1, 0, 1, 1],
         mesh: "cube",
@@ -670,10 +697,11 @@ function createWall( origin, final, addToDB )
     wall.rotate( angleInRad, RD.UP, false );
     scene.root.addChild( wall );
 
+    addObjectToList(wall_object);
+
     if(addToDB === true)
     {
         console.log("send wall to sever");
-    	addObjectToList(wall_object);
     	connection.send(JSON.stringify(wall_message));
     }
     
@@ -929,7 +957,7 @@ function deleteObjectFromOutside( object_id )
     {
         if( objects[i].id === object_id )
         {
-            removeObjectFromScene( object_id );   //delete from scene to avoid rendering it on 3D
+            //removeObjectFromScene( object_id );   //delete from scene to avoid rendering it on 3D
             deleteObjectFromList( objects[i] );   //delete object from inspector list
             objects.splice(i, 1);
             numbDeletedObjects[1]++;    
@@ -1230,7 +1258,7 @@ class Mouse {
                 }
                 else if ( this.pressed )
                 {
-                    createWall({x: this.x, y: this.y}, {x: this.memory.x, y: this.memory.y}, true);
+                    createWall({x: this.x, y: this.y}, {x: this.memory.x, y: this.memory.y}, true, null );
                     this.memory.x = this.x;
                     this.memory.y = this.y;
                 }
