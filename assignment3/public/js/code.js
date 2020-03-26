@@ -681,7 +681,6 @@ function createWall( origin, final, addToDB )
 
 function create3DCube( target, addToDB )
 {
-    
     var cube = new RD.SceneNode( {
         type: "cube",
         id: objectID,
