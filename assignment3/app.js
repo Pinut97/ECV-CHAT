@@ -73,7 +73,6 @@ wss.on("connection", function(ws){
 
 				//get the objects of the room from the db
 				room.objects = await getRoomObjectsDB(room.name, ws);
-				//console.log("Room objects: ", room.objects);
 
 				var message_to_client = {
 					type: "initial_objects",
@@ -105,9 +104,7 @@ wss.on("connection", function(ws){
 		}
 		else if( message.type === "new_object" )
 		{
-
 			replyToOthers( message, msg );
-			//console.log("The element: ", message.data);
 			rooms[room_index].objects.push( message.data );
 		}
 		else if( message.type === 'update_selectedObject_info')
@@ -117,8 +114,6 @@ wss.on("connection", function(ws){
 			{
 				rooms[room_index].objects[object_index].position = message.data.position;
 				rooms[room_index].objects[object_index].rotation = message.data.rotation;
-				rooms[room_index].objects[object_index].scale = message.data.scale;
-				//console.log(rooms[room_index].objects[object_index].position);
 				replyToOthers( message, msg );
 			}
 		}
@@ -264,27 +259,7 @@ function findUserByIndex( index )
 //eliminate user from the list of the room
 function eliminateUser( room_name, index )
 {
-	/*
-	for( var i = 0; i < rooms.length; i++ )
-	{
-		if ( rooms[i].name === users[index].room_name )
-		{
-			for( var j = 0; j < rooms[i].user_ids.length; j++ )
-			{
-				if ( rooms[i].user_ids[j] === index )
-				{
-					rooms[i].user_ids.splice( j, 1 );
-				}
-			}
-			if( rooms[i].user_ids.length === 0 )
-			{	
-				return rooms[i].name;	//return true if room is empty
-			}
-		}
-	}
-	*/
 	var room = rooms[returnRoomPositionByName(room_name)];
-	console.log("eliminateUser: ", room);
 
 	for(var i = 0; i < room.user_ids.length; i++)
 	{
@@ -299,7 +274,6 @@ function eliminateUser( room_name, index )
 		}
 	}
 
-	console.log("QUE SUSEDE");
 	return false;
 };
 
@@ -407,20 +381,3 @@ function getObjectIndex( room_index, objectId )
 	}
 	return -1;
 };
-
-/*
-function sendRoomInfo(room_name, index)
-{
-	var room_objects = [];
-
-	Room.findOne({name: room_name}, {_id: 0, objects: 1}, function(err, foundRoom){
-		if(err){
-			console.log(err);
-		} else {
-			console.log("SendRoomInfo: " + room_objects);
-			room_objects = foundRoom.objects;
-
-		}
-	});
-};
-*/
