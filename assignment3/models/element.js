@@ -5,7 +5,7 @@ var elementSchema = new mongoose.Schema({
 	id: Number,
 	position: [Number],
 	rotation: [Number],
-	scaling: [Number],
+	scaling: [Number]
 });
 
 module.exports = mongoose.model("Element", elementSchema);

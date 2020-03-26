@@ -353,7 +353,7 @@ function generateInitialObjects( initialObjects )
             createObject( initialObjects[i].position, false, initialObjects[i].type );
         }
 	}
-}
+};
 
 function connect()
 {
@@ -378,9 +378,6 @@ function connect()
 
     	if(message.type === "initial_objects")
     	{
-            console.log(message);
-            console.log( message.data );
-            if( message.data )
                 generateInitialObjects( message.data );            
         }
         else if ( message.type === 'init' )
@@ -390,8 +387,6 @@ function connect()
         }
         else if ( message.type === 'update_selectedObject_info' )
         {
-            console.log( "Update message received: " );
-            console.log( message.data );
             updateObjectMovement( message );
         }
         else if ( message.type === 'new_object' )
@@ -430,7 +425,7 @@ function sendUpdateInfo( ws )
         }
         if( isOpen( ws )){ connection.send(JSON.stringify( info )); }
     }
-}
+};
 
 function isOpen( ws ){ return ws.readyState === ws.OPEN };
 
@@ -680,6 +675,13 @@ function createWall( origin, final, addToDB )
         final: final
     };
 
+    var wall_message = {
+        type: "new_object",
+        id: user_ID,
+        room_name: roomName,
+        data: wall_object
+    };
+
     objects.push(wall_object);
     numObjects[0]++;
     objectID++;
@@ -688,8 +690,9 @@ function createWall( origin, final, addToDB )
 
     if(addToDB === true)
     {
+        console.log("send wall to sever");
     	addObjectToList(wall_object);
-    	connection.send(JSON.stringify(wall_object));
+    	connection.send(JSON.stringify(wall_message));
     }
     
 };
