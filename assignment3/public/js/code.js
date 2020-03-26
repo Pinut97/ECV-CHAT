@@ -347,7 +347,7 @@ function generateInitialObjects( initialObjects )
 	{
 		if(initialObjects[i].type === "wall")
 		{
-			createWall( initialObjects[i].origin, initialObjects[i].final, false, initialObjects[i].position );
+			createWall( initialObjects[i].origin, initialObjects[i].final, false, initialObjects[i] );
 		}
         else{
             createObject( initialObjects[i].position, false, initialObjects[i].type );
@@ -394,7 +394,7 @@ function connect()
             console.log( "New object " + message.data );
             if( message.data.type === 'wall' )
             {
-                createWall( message.data.origin, message.data.final, false, message.data.postion );
+                createWall( message.data.origin, message.data.final, false, message.data );
             }
             else{
                 createObject( message.data.position, false, message.data.type );
@@ -629,12 +629,14 @@ function drawLine ( origin, final )
     context.stroke();
 };
 
-function createWall( origin, final, addToDB, position )
+function createWall( origin, final, addToDB, data )
 {
     var pos;
-    if( position )
+    var scale;
+    if( data )
     {
-        pos = position;
+        pos = data.position;
+        scale = data.scaling;
     }
     else{
             //vector between the two points
@@ -654,20 +656,21 @@ function createWall( origin, final, addToDB, position )
             vector.y = -vector.y;
             vector.x = -vector.x;
         }
-        pos = [middlePoint.x - canvas.width * 0.5, 55, middlePoint.y - canvas.height * 0.5]
-    }
+        var normalized = normalize( vector );
+        var auxiliarVector = { x: 1, y: 0}
+        
+        var dotProduct = dot( normalized, auxiliarVector );
+        var angleInRad = Math.acos( dotProduct );
 
-    var normalized = normalize( vector );
-    var auxiliarVector = { x: 1, y: 0}
-    
-    var dotProduct = dot( normalized, auxiliarVector );
-    var angleInRad = Math.acos( dotProduct );
+        pos = [middlePoint.x - canvas.width * 0.5, 55, middlePoint.y - canvas.height * 0.5]
+        scale = [vectorLength(vector), 115, 3]
+    }
 
     var wall = new RD.SceneNode({
         type: "wall",
         id: objectID,
         position: pos,
-        scaling: [vectorLength(vector), 115, 3],
+        scaling: scale,
         color: [1, 0, 1, 1],
         mesh: "cube",
         texture: "none",
