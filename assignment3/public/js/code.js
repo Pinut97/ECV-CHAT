@@ -24,6 +24,8 @@ let view;
 let walkingMode = null;    //object to store info about the walking view
 let freeMode = null;
 let topdownMode = null;
+let grid = null;
+let outlinedObject = null;
 canvas = document.querySelector( "canvas" );
 context = canvas.getContext( "2d" );
 
@@ -49,6 +51,10 @@ function init()
     mouse = new Mouse();
     scene = new RD.Scene();
     gizmo = new RD.Gizmo();
+    grid = RD.Factory( 'grid' );
+    grid.layers = 1<<700;
+    grid.color = [0.8, 0.8, 0.8]
+    scene.root.addChild( grid );
 
     context3D = GL.create({width: canvas.width-1, height: canvas.height});
     renderer = new RD.Renderer( context3D );
@@ -79,9 +85,9 @@ function init()
     };
 
     topdownMode = {
-        position: [0, 1000, 0],
+        position: [0, 1500, 0],
         target: [0, 0, 0],
-        up: [0, 0, 1]
+        up: [0, 0, -1]
     };
 
     camera = new RD.Camera();
@@ -126,6 +132,8 @@ function update()
 {
     computeDt();
     sendUpdateInfo( connection );
+    if( outlinedObject )
+        gizmo.renderOutline( renderer, scene, camera, [outlinedObject] );
     if( objectSelected ) setInspectorValues();
     if( context3D.keys.Z )
     {
@@ -280,9 +288,12 @@ function mousemove( e )
         if( node )
         {
             node.color = GREEN_COLOR;
+            outlinedObject = node;
+            gizmo.renderOutline( renderer, scene, camera, [node] );
         }
         else
         {
+            outlinedObject = null;
             returnObjectsToColors();
         }
 
@@ -386,7 +397,13 @@ function connect()
         else if ( message.type === 'new_object' )
         {
             console.log( "New object " + message.data );
-            createObject( message.data.position, false, message.data.type );
+            if( message.data.type === 'wall' )
+            {
+                createWall( message.data.origin, message.data.final, false );
+            }
+            else{
+                createObject( message.data.position, false, message.data.type );
+            }
         }
         else if( message.type === 'object_deleted' )
         {
@@ -867,6 +884,10 @@ function createObject( target, addToDB, type )
     else if( type === 'shelf' )
     {
         createShelf( target, addToDB );
+    }
+    else if( type === 'wall' )
+    {
+        createWall( )
     }
     selectedTool = null;
 }
